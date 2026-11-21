@@ -92,6 +92,8 @@ _count(event: Event) : one (count: Number)
   Count active accepted invitations.
 _strikes(invitee: User) : one (strikes: Number)
   Count owner-cancelled invitations.
+_forUser(invitee: User) : many (invitation: Invitation, invitee: User, event: Event, request: Request, status: Status, deadline: Number, start: Number, end: Number, details: String, active: Flag, strike: Flag, reason: String)
+  Read invitations owned by this user.
 ```
 
 

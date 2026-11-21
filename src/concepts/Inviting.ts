@@ -62,7 +62,10 @@ export class InvitingConcept {
     return { changed: !!row };
   }
   async closeEvent({ event, cancelled }: { event: string; cancelled: boolean }) {
-    if (cancelled) await this.rows.updateMany({ event, active: true }, { $set: { status: 'CANCELLED', active: false, reason: 'EVENT_CANCELLED' } });
+    if (cancelled) {
+      await this.rows.updateMany({ event, active: true, status: 'PENDING' }, { $set: { status: 'EXPIRED', active: false, reason: 'EVENT_CANCELLED' } });
+      await this.rows.updateMany({ event, active: true, status: 'ACCEPTED' }, { $set: { status: 'CANCELLED', active: false, reason: 'EVENT_CANCELLED' } });
+    }
     else await this.rows.updateMany({ event, active: true }, { $set: { active: false } });
     return { event };
   }
@@ -76,5 +79,6 @@ export class InvitingConcept {
   async _all(_: Record<string, never>): Promise<InvitationRow[]> { return this.rows.find({}, { projection: { _id: 0 } }).toArray(); }
   async _count({ event }: { event: string }) { return { count: await this.rows.countDocuments({ event, status: 'ACCEPTED', active: true }) }; }
   async _strikes({ invitee }: { invitee: string }) { return { strikes: await this.rows.countDocuments({ invitee, strike: true }) }; }
+  async _forUser({ invitee }: { invitee: string }): Promise<InvitationRow[]> { return this.rows.find({ invitee }, { projection: { _id: 0 } }).toArray(); }
 }
 

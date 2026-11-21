@@ -1,6 +1,6 @@
 # JAM
 
-A small-group creative meetup app for beginners. This branch is the **website foundation + Inviting slice**, built with Vue, TypeScript, Bun, MongoDB, and the course's `@mit-sdg/sync-engine` 1.1.0. Concepts never import one another; all application coordination lives in compositions.
+A small-group creative meetup app for beginners. This branch is the **full alpha MVP**, built with Vue, TypeScript, Bun, MongoDB, and the course's `@mit-sdg/sync-engine` 1.1.0. Concepts never import one another; all application coordination lives in compositions.
 
 ## Local branches
 
@@ -51,6 +51,14 @@ MongoDB must be running for tests. Tests create and delete uniquely named test d
 
 ## Scope and handoff
 
-The `.edu` suffix is checked, but mailbox ownership is **not verified**. This branch intentionally has no real matching or venue management; seed creates fixture invitations. It is the mergeable base for the full branch, not the completed team MVP.
+The `.edu` suffix is checked, but mailbox ownership is **not verified**. The full branch includes interest profiles, availability, deterministic matching, venue capacity, backfill, confirmation, cancellation, completion, and clock-driven recovery. Run one server process.
 
 The F4 documents additionally call for deployment, a narrated recording, and submission. Those are outstanding team deliverables; no URL, recording, or submission is claimed here. See [validation](docs/VALIDATION.md).
+
+## Full MVP setup
+
+Set `ADMIN_EMAILS` in `.env` to your registered email to see matching controls. Create at least three accounts, choose a shared interest, and submit overlapping same-day slots at least 24 hours ahead. Run matching as the administrator; sign into each account and accept. The third acceptance confirms the event. Automatic matching runs hourly while the server is running.
+
+`src/venues.ts` contains suggested alpha locations and capacities: replace them with approved, precise meetup locations before a real pilot. They are not reservations. Optional `OPENAI_API_KEY` and `OPENAI_MODEL` enable event copy through the [Chat Completions API](https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create); leave them blank for tested template copy. Matching does not use the LLM.
+
+The seed command on this branch still creates invitation fixtures for reviewing the shared Inviting slice; use fresh accounts for a full matching walkthrough.

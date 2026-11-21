@@ -5,6 +5,7 @@ import type { applicationConceptSet as ApplicationConceptSet } from "../src/conc
 
 type AtPath<T, P extends readonly string[]> = P extends readonly [infer H extends string, ...infer R extends string[]] ? H extends keyof T ? AtPath<T[H], R> : H extends `${number}` ? T extends readonly (infer Item)[] ? AtPath<Item, R> : never : never : T;
 type QueryRow<T> = T extends readonly (infer Row)[] ? Row : T;
+type AllOf<T extends readonly unknown[]> = T extends readonly [infer Head, ...infer Rest] ? Head & AllOf<Rest> : unknown;
 type Jsonify<T> = T extends Date ? string : T extends null | boolean | number | string ? T : T extends (...args: never[]) => unknown ? never : T extends readonly (infer Item)[] ? Jsonify<Item>[] : T extends object ? { [K in keyof T]: Jsonify<T[K]> } : never;
 
 export type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
@@ -12,6 +13,36 @@ export type Json = null | boolean | number | string | Json[] | { [key: string]: 
 export type AppWideError = never;
 
 export type JamWire = {
+  "/admin/cancel": {
+    input: {
+      "event": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["EventGenerating"]["cancel"]>[0], ["event"]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["authorize"]>[0], ["session"]>>;
+    };
+    output: {
+      "event": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["EventGenerating"]["cancel"]>[0], ["event"]>>;
+    };
+    error: { error: AppWideError | "EVENT_UNAVAILABLE" | "FORBIDDEN" | "INVALID_INPUT" | "UNKNOWN_SESSION" };
+  };
+  "/admin/events": {
+    input: {
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["authorize"]>[0], ["session"]>>;
+    };
+    output: {
+      "admin": {
+        "events": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["EventGenerating"]["_admin"]>>>, ["events"]>>;
+      };
+    };
+    error: { error: AppWideError | "FORBIDDEN" | "INVALID_INPUT" | "UNKNOWN_SESSION" };
+  };
+  "/admin/run": {
+    input: {
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["authorize"]>[0], ["session"]>>;
+    };
+    output: {
+      "tick": Jsonify<AtPath<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["Clock"]["hourly"]>>, ["tick"]>>;
+    };
+    error: { error: AppWideError | "FORBIDDEN" | "INVALID_INPUT" | "INVITATION_UNAVAILABLE" | "UNKNOWN_SESSION" };
+  };
   "/auth/current": {
     input: {
       "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
@@ -54,6 +85,20 @@ export type JamWire = {
     };
     error: { error: AppWideError | "ACCOUNT_TAKEN" | "INVALID_ACCOUNT" | "INVALID_INPUT" };
   };
+  "/events/mine": {
+    input: {
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+    };
+    output: {
+      "calendar": {
+        "events": {
+          "details": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["EventGenerating"]["_get"]>>>, ["details"]>>;
+          "event": Jsonify<AllOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["EventGenerating"]["_get"]>[0], ["event"]>, AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["Inviting"]["_forUser"]>>>, ["event"]>]>>;
+        }[];
+      };
+    };
+    error: { error: AppWideError | "INVALID_INPUT" | "UNKNOWN_SESSION" };
+  };
   "/invitations/accept": {
     input: {
       "invitation": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Inviting"]["accept"]>[0], ["invitation"]>>;
@@ -62,7 +107,7 @@ export type JamWire = {
     output: {
       "event": Jsonify<AtPath<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["Inviting"]["accept"]>>, ["event"]>>;
     };
-    error: { error: AppWideError | "INVALID_INPUT" | "INVITATION_FORBIDDEN" | "INVITATION_UNAVAILABLE" | "UNKNOWN_SESSION" };
+    error: { error: AppWideError | "EVENT_UNAVAILABLE" | "INVALID_INPUT" | "INVITATION_FORBIDDEN" | "INVITATION_UNAVAILABLE" | "UNKNOWN_SESSION" };
   };
   "/invitations/cancel": {
     input: {
@@ -72,7 +117,7 @@ export type JamWire = {
     output: {
       "event": Jsonify<AtPath<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["Inviting"]["cancel"]>>, ["event"]>>;
     };
-    error: { error: AppWideError | "INVALID_INPUT" | "INVITATION_FORBIDDEN" | "INVITATION_UNAVAILABLE" | "UNKNOWN_SESSION" };
+    error: { error: AppWideError | "EVENT_UNAVAILABLE" | "INVALID_INPUT" | "INVITATION_FORBIDDEN" | "INVITATION_UNAVAILABLE" | "UNKNOWN_SESSION" };
   };
   "/invitations/decline": {
     input: {
@@ -96,11 +141,100 @@ export type JamWire = {
     };
     error: { error: AppWideError | "INVALID_INPUT" | "UNKNOWN_SESSION" };
   };
+  "/profile/addInterest": {
+    input: {
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+      "tag": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Characterizing"]["addInterest"]>[0], ["tag"]>>;
+    };
+    output: {
+      "tag": Jsonify<AtPath<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["Characterizing"]["addInterest"]>>, ["tag"]>>;
+    };
+    error: { error: AppWideError | "INVALID_INPUT" | "INVALID_INTEREST" | "UNKNOWN_SESSION" };
+  };
+  "/profile/mine": {
+    input: {
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+    };
+    output: {
+      "profile": {
+        "interests": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["Characterizing"]["_get"]>>>, ["interests"]>>;
+      };
+    };
+    error: { error: AppWideError | "INVALID_INPUT" | "UNKNOWN_SESSION" };
+  };
+  "/profile/removeInterest": {
+    input: {
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+      "tag": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Characterizing"]["removeInterest"]>[0], ["tag"]>>;
+    };
+    output: {
+      "tag": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Characterizing"]["removeInterest"]>[0], ["tag"]>>;
+    };
+    error: { error: AppWideError | "INVALID_INPUT" | "UNKNOWN_SESSION" };
+  };
+  "/requests/mine": {
+    input: {
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+    };
+    output: {
+      "pool": {
+        "requests": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["Matching"]["_mine"]>>>, ["requests"]>>;
+      };
+    };
+    error: { error: AppWideError | "INVALID_INPUT" | "UNKNOWN_SESSION" };
+  };
+  "/requests/submit": {
+    input: {
+      "areas": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Matching"]["submit"]>[0], ["areas"]>>;
+      "end": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Matching"]["submit"]>[0], ["end"]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+      "start": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Matching"]["submit"]>[0], ["start"]>>;
+    };
+    output: {
+      "request": Jsonify<AtPath<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["Matching"]["submit"]>>, ["request"]>>;
+    };
+    error: { error: AppWideError | "INVALID_INPUT" | "INVALID_SLOT" | "SLOT_UNAVAILABLE" | "UNKNOWN_SESSION" };
+  };
+  "/requests/withdraw": {
+    input: {
+      "request": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Matching"]["withdraw"]>[0], ["request"]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+    };
+    output: {
+      "request": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Matching"]["withdraw"]>[0], ["request"]>>;
+    };
+    error: { error: AppWideError | "INVALID_INPUT" | "INVALID_SLOT" | "SLOT_UNAVAILABLE" | "UNKNOWN_SESSION" };
+  };
 };
 
 export type HttpAppWideError = never;
 
 export type JamWireHttp = {
+  "/admin/cancel": {
+    input: {
+      "event": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["EventGenerating"]["cancel"]>[0], ["event"]>>;
+    };
+    output: {
+      "event": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["EventGenerating"]["cancel"]>[0], ["event"]>>;
+    };
+    error: { error: HttpAppWideError | "CONFLICT" | "FORBIDDEN" | "INVALID_REQUEST" | "UNAUTHORIZED" };
+  };
+  "/admin/events": {
+    input: Record<string, never>;
+    output: {
+      "admin": {
+        "events": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["EventGenerating"]["_admin"]>>>, ["events"]>>;
+      };
+    };
+    error: { error: HttpAppWideError | "FORBIDDEN" | "INVALID_REQUEST" | "UNAUTHORIZED" };
+  };
+  "/admin/run": {
+    input: Record<string, never>;
+    output: {
+      "tick": Jsonify<AtPath<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["Clock"]["hourly"]>>, ["tick"]>>;
+    };
+    error: { error: HttpAppWideError | "CONFLICT" | "FORBIDDEN" | "INVALID_REQUEST" | "UNAUTHORIZED" };
+  };
   "/auth/current": {
     input: Record<string, never>;
     output: {
@@ -135,6 +269,18 @@ export type JamWireHttp = {
     };
     error: { error: HttpAppWideError | "CONFLICT" | "INVALID_REQUEST" };
   };
+  "/events/mine": {
+    input: Record<string, never>;
+    output: {
+      "calendar": {
+        "events": {
+          "details": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["EventGenerating"]["_get"]>>>, ["details"]>>;
+          "event": Jsonify<AllOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["EventGenerating"]["_get"]>[0], ["event"]>, AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["Inviting"]["_forUser"]>>>, ["event"]>]>>;
+        }[];
+      };
+    };
+    error: { error: HttpAppWideError | "INVALID_REQUEST" | "UNAUTHORIZED" };
+  };
   "/invitations/accept": {
     input: {
       "invitation": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Inviting"]["accept"]>[0], ["invitation"]>>;
@@ -171,5 +317,61 @@ export type JamWireHttp = {
       };
     };
     error: { error: HttpAppWideError | "INVALID_REQUEST" | "UNAUTHORIZED" };
+  };
+  "/profile/addInterest": {
+    input: {
+      "tag": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Characterizing"]["addInterest"]>[0], ["tag"]>>;
+    };
+    output: {
+      "tag": Jsonify<AtPath<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["Characterizing"]["addInterest"]>>, ["tag"]>>;
+    };
+    error: { error: HttpAppWideError | "INVALID_REQUEST" | "UNAUTHORIZED" };
+  };
+  "/profile/mine": {
+    input: Record<string, never>;
+    output: {
+      "profile": {
+        "interests": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["Characterizing"]["_get"]>>>, ["interests"]>>;
+      };
+    };
+    error: { error: HttpAppWideError | "INVALID_REQUEST" | "UNAUTHORIZED" };
+  };
+  "/profile/removeInterest": {
+    input: {
+      "tag": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Characterizing"]["removeInterest"]>[0], ["tag"]>>;
+    };
+    output: {
+      "tag": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Characterizing"]["removeInterest"]>[0], ["tag"]>>;
+    };
+    error: { error: HttpAppWideError | "INVALID_REQUEST" | "UNAUTHORIZED" };
+  };
+  "/requests/mine": {
+    input: Record<string, never>;
+    output: {
+      "pool": {
+        "requests": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["Matching"]["_mine"]>>>, ["requests"]>>;
+      };
+    };
+    error: { error: HttpAppWideError | "INVALID_REQUEST" | "UNAUTHORIZED" };
+  };
+  "/requests/submit": {
+    input: {
+      "areas": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Matching"]["submit"]>[0], ["areas"]>>;
+      "end": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Matching"]["submit"]>[0], ["end"]>>;
+      "start": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Matching"]["submit"]>[0], ["start"]>>;
+    };
+    output: {
+      "request": Jsonify<AtPath<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["Matching"]["submit"]>>, ["request"]>>;
+    };
+    error: { error: HttpAppWideError | "CONFLICT" | "INVALID_REQUEST" | "UNAUTHORIZED" };
+  };
+  "/requests/withdraw": {
+    input: {
+      "request": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Matching"]["withdraw"]>[0], ["request"]>>;
+    };
+    output: {
+      "request": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Matching"]["withdraw"]>[0], ["request"]>>;
+    };
+    error: { error: HttpAppWideError | "CONFLICT" | "INVALID_REQUEST" | "UNAUTHORIZED" };
   };
 };

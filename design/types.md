@@ -18,5 +18,12 @@ instantiate Inviting with
   User is Person
   Event is Event
   Request is SlotRequest
+instantiate Characterizing with
+  User is Person
+instantiate Matching with
+  User is Person
+  Event is Event
+instantiate EventGenerating with
+  Group is Matching.Group
 instantiate Clock
 ```

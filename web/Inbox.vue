@@ -10,7 +10,7 @@ watch(pendingAction, async value => { await nextTick(); if (value) dialog.value?
 const active = computed(() => invitations.value.filter(i => i.active));
 const history = computed(() => invitations.value.filter(i => !i.active));
 async function refresh() {
-  try { const result = await api<{ inbox: { invitations: string; strikes: number } }>('/invitations/mine'); invitations.value = JSON.parse(result.inbox.invitations); strikes.value = result.inbox.strikes; }
+  try { const result = await api<{ inbox: { invitations: string; strikes: number } }>('/invitations/mine'); invitations.value = JSON.parse(result.inbox.invitations); const live = await api<{ calendar: { events: { event: string; details: string }[] } }>('/events/mine'); for (const invitation of invitations.value) { const event = live.calendar.events.find(e => e.event === invitation.event); if (event) invitation.details = event.details; } strikes.value = result.inbox.strikes; }
   catch (e) { error.value = (e as Error).message; }
   finally { loading.value = false; }
 }

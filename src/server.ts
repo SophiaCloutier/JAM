@@ -12,11 +12,18 @@ export function buildServer() {
   function serial<T>(work: () => Promise<T>): Promise<T> {
     const next = queue.then(work); queue = next.catch(() => {}); return next;
   }
+  async function settleTick() {
+    await application.concepts.Clock.tick({}); await application.whenIdle();
+    await application.concepts.Clock.review({}); await application.whenIdle();
+    await application.concepts.Clock.reconcile({}); await application.whenIdle();
+    await application.concepts.Clock.recover({}); await application.whenIdle();
+  }
   return { application,
     handle: (request: Request) => serial(async () => {
       if (new URL(request.url).pathname.startsWith('/api/internal/')) return new Response('Not found', { status: 404 });
       const response = await http(request); await application.whenIdle(); return response;
     }),
-    tick: () => serial(async () => { await application.concepts.Clock.tick({}); await application.whenIdle(); }),
+    tick: () => serial(settleTick),
+    match: () => serial(async () => { await settleTick(); await application.concepts.Clock.hourly({}); await application.whenIdle(); }),
   };
 }

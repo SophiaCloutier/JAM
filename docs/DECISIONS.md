@@ -13,3 +13,9 @@ The alpha host serializes HTTP admission and ticks through reaction settlement. 
 JSON display snapshots keep the Inviting concept independent from event structure. Times are epoch milliseconds in storage and displayed in the viewer's stated local timezone. Cancellation/decline consequences are explained before confirmation. The event display is a snapshot on this slice; the full branch supplies live event state through composition.
 
 Increment 1: scaffold, independent concepts, auth and invitation HTTP compositions, desktop/mobile layout, seed, concept boundary tests, and real MongoDB/HTTP journey checks. Fixes from validation included engine specification grammar and declaring the inbox read model rather than passing a query as a response value.
+
+Increment 2: added independent Characterizing, Matching and EventGenerating concepts and their sync compositions. Matching uses exact tags and fixed-category similarity (0.7); embedding similarity is deferred. Each small matching/event aggregate uses MongoDB revision compare-and-swap so grouping and venue reservations are atomic. The pool is capped at 5,000 historical requests for alpha.
+
+Backfill closes early enough to preserve the full six-hour response window before the eight-hour cutoff. Accepted requests from cancelled events reopen with priority only if their remaining availability can still fit that window and a two-hour event. Otherwise they close and the user posts a new slot. Pending invitations to cancelled events expire without strikes. These timing refinements avoid immediately requeueing users into impossible events.
+
+Full-journey verification passed: three HTTP-registered users add interests, post slots, trigger matching, receive engine-generated invitations, accept, and see a confirmed event (21 assertions). Optional paid LLM copy, public deployment, and full lifecycle browser validation have not been exercised.
