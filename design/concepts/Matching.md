@@ -67,6 +67,11 @@ finish(date: String) : returns (date: String)
   then
     complete the date's forming clusters and mark remaining pending requests unmatched
     returns date
+settle(date: String, placed: String) : returns (date: String)
+  where preconditions hold
+  then
+    mark each complete cluster of the date generated if any of its requests was placed, otherwise failed, and its matched requests that were not placed unmatched for no venue
+    returns date
 activate(cluster: Cluster, event: Event) : returns (cluster: Cluster)
   where preconditions hold
   then
@@ -100,6 +105,8 @@ _profile(date: String) : one (candidates: String)
   Read every pending request for the date, offering all of its profile interests.
 _completed() : many (cluster: Cluster, area: String, tag: String, start: Number, end: Number, size: Number)
   Read complete clusters awaiting an event.
+_planning() : many (date: String, clusters: String)
+  Read complete clusters awaiting a plan, one row per date, as JSON with each cluster's tag, full shared window, shared reachable areas and members.
 _members(cluster: Cluster) : many (invitee: User, request: Request)
   Read the matched members of a cluster.
 ```

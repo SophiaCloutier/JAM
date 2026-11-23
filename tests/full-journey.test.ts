@@ -63,6 +63,24 @@ test('chosen interests form exact groups first, and Surprise me joins the smalle
   expect(await tag(surprise)).toBe('drawing'); // both exact; drawing had 3 members, painting 4
 }, 60000);
 
+test('a cluster bigger than the only venue open in its window is split: six get seats, the youngest two get NO_VENUE', async () => {
+  // 07:00-09:00 within 1 mi of MIT reaches Campus and Cambridge; only one 6-seat sample café is open for that whole window.
+  const early = { ...request('drawing'), start: bostonTime(date, '07:00'), end: bostonTime(date, '09:00') };
+  const cookies: string[] = [];
+  for (let i = 1; i <= 8; i++) { const c = await person(`e${i}`, ['drawing']); cookies.push(c); await ok('/requests/submit', early, c); }
+  await runMatching();
+  const events = new Set<string>();
+  for (const c of cookies.slice(0, 6)) {
+    const rows = await inbox(c); expect(rows).toHaveLength(1); events.add(rows[0].event);
+    expect(await myRequest(c)).toMatchObject({ status: 'MATCHED' });
+  }
+  expect(events.size).toBe(1);
+  for (const c of cookies.slice(6)) {
+    expect(await inbox(c)).toHaveLength(0);
+    expect(await myRequest(c)).toMatchObject({ status: 'UNMATCHED', reason: 'NO_VENUE' });
+  }
+}, 60000);
+
 test('requests are authenticated, owner-checked and validated in the back end', async () => {
   expect((await call('/requests/submit', request('drawing'))).status).toBe(401);
   const owner = await person('owner', ['drawing']), other = await person('other', ['drawing']);

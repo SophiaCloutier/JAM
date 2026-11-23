@@ -18,3 +18,14 @@ New and changed tests:
 - `tests/full-journey.test.ts` (HTTP and reactions): the concept doc's end-to-end scenario including an unmatched user who cannot re-request the matched date but can request a later one; exact groups before related groups with Surprise me joining the smaller exact group; authentication, owner checks, lead-time and interest validation, one open request, and admin-only matching.
 
 Observed by the implementer (agent) on 2026-11-22, before the team ran anything: `sync-engine check`, `sync-engine artifacts check`, `tsc` and `vue-tsc` pass. MongoDB was not available on that machine, so the Matching and EventGenerating test files were run against an in-memory stand-in for `AtomicState` only: 16 tests pass, repeated three times. **Not yet run:** any test against real MongoDB, the full HTTP journey, the Inviting tests, and a browser walkthrough of the new request form. Run `docker compose up -d` then `bun test` to check them.
+
+## Increment 4: event planning
+
+New and changed tests:
+- `tests/event-planner.test.ts` (pure, no database). Covers: sample venues; grid sessions; a busy day that checks every invariant (sizes 3–15, inside the cluster's window, venue area among the cluster's areas, overlapping seats ≤ capacity, daily cap, opening hours); seat sharing; the daily cap; identical output for identical input; ties spreading across venues; a 31-person cluster split 15/13/3 under one group; oldest seated first; leftovers joining a spare seat with the same tag; members who cannot fit absent from every event.
+- `tests/concept-boundaries.test.ts`: no concept imports another; EventGenerating and the planner use no similarity.
+- `tests/event-generating.test.ts` (rewritten): once-per-date planning, members and placed ids, a cluster too big for its only venue, an unplaceable date, `_limits`, `reviewDue` cancel and finish, admin cancel.
+- `tests/matching.test.ts`: existing tests unchanged; new tests for `_planning` and `settle`.
+- `tests/full-journey.test.ts`: existing tests unchanged; new journey where eight people share a window in which only a six-seat café is open, so six are invited and two get `NO_VENUE`.
+
+Observed by the implementer (agent) on 2026-11-23: `bun run generate`, `bun run check` (same 19 `MISSING_ENDPOINT_FALLBACK` advisories as before) and `bun run build` pass. Docker and MongoDB were not available on that machine. The planner, boundary and catalog tests pass. The Matching and EventGenerating test files pass (23 tests) against an in-memory stand-in for `AtomicState` and `database()`. **Not yet run:** any test against real MongoDB, the full HTTP journeys (including the new `NO_VENUE` one), the Inviting, Characterizing and HTTP tests, and a browser walkthrough. Run `docker compose up -d` then `bun test`.

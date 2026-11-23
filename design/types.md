@@ -25,4 +25,6 @@ instantiate Matching with
   Event is Event
 instantiate EventGenerating with
   Group is Matching.Cluster
+  User is Person
+  Request is SlotRequest
 ```

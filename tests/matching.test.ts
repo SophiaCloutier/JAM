@@ -161,3 +161,43 @@ test('withdraw only affects the owner\'s waiting request; dates already reached 
   await matching.openDue({ force: false });
   expect(await status('b')).toMatchObject({ status: 'UNMATCHED', reason: 'TOO_LATE' });
 });
+
+type Planning = { cluster: string; tag: string; start: number; end: number; areas: string[]; members: { request: string; user: string }[] };
+async function planning() { return (await matching._planning({})).map(r => ({ date: r.date, clusters: JSON.parse(r.clusters) as Planning[] })); }
+
+test('_planning hands over each complete cluster with its full shared window, all shared areas and members oldest first', async () => {
+  await ask('a', { selected: 'drawing', from: '10:00', until: '16:00' });
+  await ask('b', { selected: 'drawing', from: '11:00', until: '15:00' });
+  await ask('c', { selected: 'drawing', from: '09:00', until: '14:30' });
+  await openFriday(); await runChain();
+  const rows = await planning();
+  expect(rows.map(r => r.date)).toEqual([SATURDAY]);
+  const [c] = rows[0].clusters;
+  expect(c).toMatchObject({ tag: 'drawing', start: bostonTime(SATURDAY, '11:00'), end: bostonTime(SATURDAY, '14:30'), areas: ['Campus', 'Cambridge'] });
+  expect(c.members.map(m => m.user)).toEqual(['a', 'b', 'c']);
+  // _completed is unchanged: it still reports the collapsed single area and an event-length window.
+  const [completed] = await clusters();
+  expect(completed).toMatchObject({ cluster: c.cluster, area: 'Campus', start: c.start, end: c.start + 2 * 3600000 });
+});
+
+test('settle: a cluster with a seated member is generated, unseated members get NO_VENUE, and a cluster with none is failed', async () => {
+  for (const u of ['d1', 'd2', 'd3', 'd4']) await ask(u, { selected: 'drawing' });
+  for (const u of ['p1', 'p2', 'p3']) await ask(u, { selected: 'painting' });
+  await openFriday(); await runChain();
+  const [{ clusters: complete }] = await planning();
+  const drawing = complete.find(c => c.tag === 'drawing')!;
+  const seated = drawing.members.slice(0, 3).map(m => m.request);
+  await matching.settle({ date: SATURDAY, placed: JSON.stringify(seated) });
+  for (const u of ['d1', 'd2', 'd3']) expect((await status(u)).status).toBe('MATCHED');
+  for (const u of ['d4', 'p1', 'p2', 'p3']) expect(await status(u)).toMatchObject({ status: 'UNMATCHED', reason: 'NO_VENUE' });
+  expect(await planning()).toEqual([]);
+  expect(await clusters()).toEqual([]);
+  // A failed cluster cannot be activated or closed, and settling again changes nothing.
+  const painting = complete.find(c => c.tag === 'painting')!;
+  await matching.close({ cluster: painting.cluster });
+  await matching.settle({ date: SATURDAY, placed: '[]' });
+  expect((await status('d1')).status).toBe('MATCHED');
+  // Closing a generated cluster (for example when one of its events locks) never changes its requests.
+  await matching.close({ cluster: drawing.cluster });
+  for (const u of ['d1', 'd2', 'd3']) expect((await status(u)).status).toBe('MATCHED');
+});

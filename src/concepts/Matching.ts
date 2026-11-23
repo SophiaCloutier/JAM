@@ -174,6 +174,22 @@ export class MatchingConcept {
     });
   }
 
+  /** Records which requests a date's event plan seated. `placed` is a JSON array of request ids. Each complete cluster of the
+   * date becomes GENERATED if any of its requests is placed, otherwise FAILED; its matched requests that were not placed become
+   * unmatched (NO_VENUE). Does no planning, and only touches complete clusters, so settling twice changes nothing. */
+  async settle({ date, placed }: { date: string; placed: string }) {
+    let ids: unknown;
+    try { ids = JSON.parse(placed); } catch { ids = []; }
+    const seated = new Set(Array.isArray(ids) ? ids.filter((id): id is string => typeof id === 'string') : []);
+    return this.state.change(s => {
+      for (const c of s.clusters.filter(c => c.date === date && c.status === 'COMPLETE')) {
+        c.status = c.members.some(m => seated.has(m)) ? 'GENERATED' : 'FAILED';
+        for (const r of s.requests.filter(r => r.cluster === c.cluster && r.status === 'MATCHED' && !seated.has(r.request))) { r.status = 'UNMATCHED'; r.reason = 'NO_VENUE'; }
+      }
+      return { date };
+    });
+  }
+
   async _mine({ user }: { user: string }) {
     const s = await this.state.read();
     return { requests: JSON.stringify(s.requests.filter(r => r.user === user).sort((a, b) => b.created - a.created)
@@ -196,6 +212,16 @@ export class MatchingConcept {
   }
   async _members({ cluster }: { cluster: string }) {
     return (await this.state.read()).requests.filter(r => r.cluster === cluster && r.status === 'MATCHED').map(r => ({ invitee: r.user, request: r.request }));
+  }
+
+  /** Complete clusters awaiting a plan, one row per date, as JSON: [{ cluster, tag, start, end, areas, members: [{ request, user }] }].
+   * `start`/`end` is the cluster's full shared window and `areas` all its shared reachable areas; members are oldest first. */
+  async _planning(_: Record<string, never>) {
+    const s = await this.state.read(), complete = s.clusters.filter(c => c.status === 'COMPLETE');
+    return [...new Set(complete.map(c => c.date))].sort().map(date => ({ date, clusters: JSON.stringify(complete.filter(c => c.date === date).map(c => ({
+      cluster: c.cluster, tag: c.tag, start: c.start, end: c.end, areas: c.areas,
+      members: s.requests.filter(r => r.cluster === c.cluster && r.status === 'MATCHED').sort((a, b) => this.#byAge(a, b)).map(r => ({ request: r.request, user: r.user })),
+    }))) }));
   }
 
   #candidates(s: Pool, date: string, offered: Candidate[]) {

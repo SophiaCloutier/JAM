@@ -42,23 +42,30 @@ const JoinLeftovers = reaction(({ date, candidates, limits }) => when(Matching.f
   .then(Matching.assign({ date, stage: 'leftover', candidates, limits })));
 const Finish = reaction(({ date }) => when(Matching.assign({ stage: 'leftover' }).responds({ date })).then(Matching.finish({ date })));
 
-// ---- Event generation and invitations ------------------------------------
-const GenerateForMatch = reaction(({ group, area, tag, start, end, size }) => when(Matching.finish({}).responds({}))
-  .where(Matching._completed({}).is({ cluster: group, area, tag, start, end, size })).then(EventGenerating.generate({ group, area, tag, start, end, size })));
-const RecoverDrafts = reaction(({ group, area, tag, start, end, size }) => when(Matching.openDue({}).responds({}))
-  .where(Matching._completed({}).is({ cluster: group, area, tag, start, end, size })).then(EventGenerating.generate({ group, area, tag, start, end, size })));
-const ActivateGroup = reaction(({ group, event }) => when(EventGenerating.generate({ group }).responds({ generated: true, event })).then(Matching.activate({ cluster: group, event })));
-const ReleaseFailedGroup = reaction(({ group }) => when(EventGenerating.generate({ group }).responds({ generated: false })).then(Matching.abandon({ cluster: group })));
-const InviteParticipants = reaction(({ group, event, start, end, deadline, details, invitee, request }) => when(EventGenerating.generate({ group }).responds({ generated: true, event, start, end, deadline, details }))
-  .where(Matching._members({ cluster: group }).is({ invitee, request })).then(Inviting.invite({ invitee, event, request, start, end, deadline, details })));
-const RecoverDeliveries = reaction(({ group, event, start, end, deadline, details, invitee, request }) => when(Matching.openDue({}).responds({}))
-  .where(EventGenerating._deliveries({}).is({ group, event, start, end, deadline, details }), Matching._members({ cluster: group }).is({ invitee, request })).then(Inviting.invite({ invitee, event, request, start, end, deadline, details })));
+// ---- Event planning and invitations ---------------------------------------
+// Clusters cross as opaque JSON (tag, shared window, shared areas, members). EventGenerating plans venues, times and
+// splits for a whole date once; it never sees similarity. Planning is idempotent per date, so recovery simply runs it again.
+const GenerateForMatch = reaction(({ date, clusters }) => when(Matching.finish({}).responds({}))
+  .where(Matching._planning({}).is({ date, clusters })).then(EventGenerating.plan({ date, clusters })));
+const RecoverDrafts = reaction(({ date, clusters }) => when(Matching.openDue({}).responds({}))
+  .where(Matching._planning({}).is({ date, clusters })).then(EventGenerating.plan({ date, clusters })));
+const InviteParticipants = reaction(({ plan, event, start, end, deadline, details, invitee, request }) => when(EventGenerating.plan({}).responds({ plan }))
+  .where(EventGenerating._planned({ plan }).is({ event, start, end, deadline, details }), EventGenerating._members({ event }).is({ invitee, request }))
+  .then(Inviting.invite({ invitee, event, request, start, end, deadline, details })));
+// Status only: clusters with a seated member become generated, others failed; unseated members become unmatched (NO_VENUE).
+const SettlePlan = reaction(({ date, plan, placed }) => when(EventGenerating.plan({ date }).responds({ plan }))
+  .where(EventGenerating._placed({ plan }).is({ placed })).then(Matching.settle({ date, placed })));
+const RecoverDeliveries = reaction(({ event, start, end, deadline, details, invitee, request }) => when(Matching.openDue({}).responds({}))
+  .where(EventGenerating._deliveries({}).is({ event, start, end, deadline, details }), EventGenerating._members({ event }).is({ invitee, request }))
+  .then(Inviting.invite({ invitee, event, request, start, end, deadline, details })));
 
 // ---- Responses and event lifecycle ----------------------------------------
 const Confirm = reaction(({ event, count }) => when(Inviting.accept({}).responds({ event })).where(Inviting._count({ event }).is({ count })).then(EventGenerating.review({ event, count })));
 const ReconsiderCancellation = reaction(({ event, count }) => when(Inviting.cancel({}).responds({ event })).where(Inviting._count({ event }).is({ count })).then(EventGenerating.review({ event, count })));
 const SayNo = reaction(({ request }) => when(Inviting.decline({}).responds({ request })).then(Matching.reconcile({ request, status: 'DECLINED', active: false, reason: '' })));
 const LateCancel = reaction(({ request }) => when(Inviting.cancel({}).responds({ request })).then(Matching.reconcile({ request, status: 'CANCELLED', active: false, reason: 'YOU_CANCELLED' })));
+// Several events may share a group (cluster). Matching.close only sets the cluster's status marker; it never touches
+// requests or other events, so closing for one event cannot affect a sibling event or its members.
 const CloseAtCutoff = reaction(({ group }) => when(EventGenerating.review({}).responds({ group, locked: true })).then(Matching.close({ cluster: group })));
 const CancelInvitations = reaction(({ event }) => when(EventGenerating.review({}).responds({ event, status: 'CANCELLED' })).then(Inviting.closeEvent({ event, cancelled: true })));
 const FinishInvitations = reaction(({ event }) => when(EventGenerating.review({}).responds({ event, status: 'DONE' })).then(Inviting.closeEvent({ event, cancelled: false })));
@@ -83,4 +90,4 @@ const Admin = endpoint('/admin/events', ({ session, user }) => receive({ session
 const Run = endpoint('/admin/run', ({ session, user, run }) => receive({ session }).then(Sessioning.authorize({ session }).responds({ user })).then(Matching.openDue({ force: true }).responds({ run })).then(respond({ run })), { input: { required: ['session'] }, validators: { input: sessionInput } });
 const CancelEvent = endpoint('/admin/cancel', ({ session, user, event }) => receive({ session, event }).then(Sessioning.authorize({ session }).responds({ user })).then(EventGenerating.cancel({ event })).then(respond({ event })), { input: { required: ['session', 'event'] }, validators: { input: input(['session', 'event'], v => text(v.event, 100)) } });
 
-export const composition = { MyRequests, Mine, Submit, Withdraw, FormChosen, JoinChosen, JoinProfile, FormProfile, JoinLeftovers, Finish, GenerateForMatch, RecoverDrafts, ActivateGroup, ReleaseFailedGroup, InviteParticipants, RecoverDeliveries, Confirm, ReconsiderCancellation, SayNo, LateCancel, CloseAtCutoff, CancelInvitations, FinishInvitations, CancelDue, FinishDue, CloseReviewed, AdminCancelled, ReconcileClosedEvent, MyEvents, Events, AdminEvents, Admin, Run, CancelEvent };
+export const composition = { MyRequests, Mine, Submit, Withdraw, FormChosen, JoinChosen, JoinProfile, FormProfile, JoinLeftovers, Finish, GenerateForMatch, RecoverDrafts, InviteParticipants, SettlePlan, RecoverDeliveries, Confirm, ReconsiderCancellation, SayNo, LateCancel, CloseAtCutoff, CancelInvitations, FinishInvitations, CancelDue, FinishDue, CloseReviewed, AdminCancelled, ReconcileClosedEvent, MyEvents, Events, AdminEvents, Admin, Run, CancelEvent };

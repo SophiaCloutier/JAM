@@ -58,10 +58,15 @@ request offers, which is how the two request options are realised:
 
 ## Events and invitations
 
-Each complete cluster is [passed to EventGenerating](reaction:Meetups.GenerateForMatch); [recovery](reaction:Meetups.RecoverDrafts) retries
-complete clusters left by an interrupted run. A generated event [activates its cluster](reaction:Meetups.ActivateGroup) and
-[invites every member](reaction:Meetups.InviteParticipants); [delivery recovery](reaction:Meetups.RecoverDeliveries) re-sends idempotently.
-If no venue fits, the cluster is [released](reaction:Meetups.ReleaseFailedGroup) and its members become unmatched (`NO_VENUE`).
+When a date finishes, its complete clusters are [passed to EventGenerating](reaction:Meetups.GenerateForMatch) as opaque JSON:
+each cluster's tag, full shared window, shared reachable areas and members. `EventGenerating.plan` plans the whole date once,
+without any notion of similarity. It chooses a venue in one of the cluster's areas, a start time on the grid inside the cluster's window
+and the venue's opening hours, and splits of three to fifteen people, with overlapping events at one venue sharing its seats and a
+daily event limit per venue. Leftovers may take spare seats in another event with the same tag that fits their own cluster.
+[Recovery](reaction:Meetups.RecoverDrafts) plans dates whose clusters were left complete by an interrupted run; planning is idempotent per date.
+Each planned event [invites its members](reaction:Meetups.InviteParticipants), and [delivery recovery](reaction:Meetups.RecoverDeliveries)
+re-sends idempotently. The seated request ids are then [reported to Matching](reaction:Meetups.SettlePlan): a cluster with any seated
+member is generated, otherwise failed, and members who got no seat become unmatched (`NO_VENUE`).
 
 The [inbox](reaction:Invitations.Inbox) uses the [private inbox read model](former:Invitations.MyInbox) to expose only invitations owned by the session subject.
 [Accept](reaction:Invitations.Accept), [decline](reaction:Invitations.Decline), and [cancel](reaction:Invitations.Cancel)
