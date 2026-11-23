@@ -61,7 +61,7 @@ onMounted(() => act(refresh, ''));
 <label>What do you want to do?<select v-model="choice"><option value="">Surprise me (any of my interests)</option><option v-for="t in tags" :key="t" :value="t">{{ t }}</option></select></label>
 <label>Starting from<select v-model="location"><option v-for="l in locations" :key="l.name" :value="l.name">{{ l.name }}</option></select></label>
 <label>Willing to travel<select v-model.number="radius"><option v-for="r in radii" :key="r" :value="r">up to {{ r }} mi</option></select></label>
-<p v-if="formProblem && date" class="hint" role="status">{{ formProblem }}</p>
+<p v-if="formProblem" class="hint" role="status">{{ formProblem }}</p>
 <button class="primary" :disabled="busy || !!formProblem">Find me a JAM</button></form>
 <details v-if="past.length"><summary>Previous requests</summary><p v-for="r in past" :key="r.request">{{ pretty(r.date) }} · {{ r.selected || 'Surprise me' }} · {{ r.reason.replaceAll('_', ' ').toLowerCase() }}</p></details></section></div>
 <section v-if="admin" class="panel admin-panel"><h2>Matching controls</h2><p>Matching runs automatically the day before each date. Run it now to match every waiting date up to {{ pretty(earliest) }}.</p><button :disabled="busy" @click="act(() => api('/admin/run'), 'Matching finished. Unmatched people were asked to choose another date.')">Run matching</button><article v-for="event in events" :key="event.event" class="admin-event"><b>{{ event.title }}</b> · {{ event.status }}<button v-if="['FORMING','CONFIRMED'].includes(event.status)" :disabled="busy" @click="act(() => api('/admin/cancel', { event: event.event }), 'Event cancelled. Its participants were asked to choose another date.')">Cancel event</button></article></section></section></template>

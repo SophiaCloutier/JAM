@@ -83,7 +83,7 @@ export type JamWire = {
       "session": Jsonify<AtPath<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["Sessioning"]["start"]>>, ["session"]>>;
       "user": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["start"]>[0], ["subject"]>>;
     };
-    error: { error: AppWideError | "ACCOUNT_TAKEN" | "INVALID_ACCOUNT" | "INVALID_INPUT" };
+    error: { error: AppWideError | "ACCOUNT_TAKEN" | "INVALID_ACCOUNT" | "INVALID_INPUT" | "PROFILE_EXISTS" };
   };
   "/events/mine": {
     input: {
@@ -148,7 +148,7 @@ export type JamWire = {
     output: {
       "tag": Jsonify<AtPath<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["Characterizing"]["addInterest"]>>, ["tag"]>>;
     };
-    error: { error: AppWideError | "INVALID_INPUT" | "INVALID_INTEREST" | "UNKNOWN_SESSION" };
+    error: { error: AppWideError | "INVALID_INPUT" | "INVALID_INTEREST" | "PROFILE_NOT_FOUND" | "UNKNOWN_SESSION" };
   };
   "/profile/mine": {
     input: {
@@ -169,7 +169,7 @@ export type JamWire = {
     output: {
       "tag": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Characterizing"]["removeInterest"]>[0], ["tag"]>>;
     };
-    error: { error: AppWideError | "INVALID_INPUT" | "UNKNOWN_SESSION" };
+    error: { error: AppWideError | "INVALID_INPUT" | "PROFILE_NOT_FOUND" | "UNKNOWN_SESSION" };
   };
   "/requests/mine": {
     input: {
@@ -326,7 +326,7 @@ export type JamWireHttp = {
     output: {
       "tag": Jsonify<AtPath<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["Characterizing"]["addInterest"]>>, ["tag"]>>;
     };
-    error: { error: HttpAppWideError | "INVALID_REQUEST" | "UNAUTHORIZED" };
+    error: { error: HttpAppWideError | "CONFLICT" | "INVALID_REQUEST" | "UNAUTHORIZED" };
   };
   "/profile/mine": {
     input: Record<string, never>;
@@ -344,7 +344,7 @@ export type JamWireHttp = {
     output: {
       "tag": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Characterizing"]["removeInterest"]>[0], ["tag"]>>;
     };
-    error: { error: HttpAppWideError | "INVALID_REQUEST" | "UNAUTHORIZED" };
+    error: { error: HttpAppWideError | "CONFLICT" | "INVALID_REQUEST" | "UNAUTHORIZED" };
   };
   "/requests/mine": {
     input: Record<string, never>;

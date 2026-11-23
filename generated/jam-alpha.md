@@ -32,9 +32,12 @@ Defined in [Characterizing](../design/concepts/Characterizing.md), line 1.
 #### Actions
 
 - `create(user: User) : returns (user: User)`
+  - Refuses `PROFILE_EXISTS`: a profile with this user already exists.
 - `addInterest(user: User, tag: String) : returns (tag: String)`
-  - Refuses `INVALID_INTEREST`: Check the action preconditions.
+  - Refuses `PROFILE_NOT_FOUND`: no profile with this user exists.
+  - Refuses `INVALID_INTEREST`: Use 2–40 letters for an interest, and keep up to 12 interests.
 - `removeInterest(user: User, tag: String) : returns (tag: String)`
+  - Refuses `PROFILE_NOT_FOUND`: no profile with this user exists.
 
 #### Queries
 
