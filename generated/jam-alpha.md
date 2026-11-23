@@ -56,10 +56,10 @@ Defined in [EventGenerating](../design/concepts/EventGenerating.md), line 1.
 
 - `plan(date: String, clusters: String) : returns (plan: Plan)`
 - `review(event: Event, count: Number) : returns (event: Event, group: Group, status: String, locked: Flag)`
-  - Refuses `EVENT_UNAVAILABLE`: Check the action preconditions.
+  - Refuses `EVENT_UNAVAILABLE`: Event not found.
 - `reviewDue() : returns (review: Review)`
 - `cancel(event: Event) : returns (event: Event, group: Group)`
-  - Refuses `EVENT_UNAVAILABLE`: Check the action preconditions.
+  - Refuses `EVENT_UNAVAILABLE`: Only upcoming events can be cancelled.
 
 #### Queries
 

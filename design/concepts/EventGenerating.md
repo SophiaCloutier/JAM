@@ -38,33 +38,33 @@ plan(date: String, clusters: String) : returns (plan: Plan)
     reuse the date's existing plan, or plan events for the date's groups and store them with their placed members under a new plan
     returns plan
 review(event: Event, count: Number) : returns (event: Event, group: Group, status: String, locked: Flag)
-  where action preconditions hold
+  where the event does not exist
   then
-    apply the documented state transition atomically
+    refuses EVENT_UNAVAILABLE "Event not found."
+  where preconditions hold
+  then
+    if the event is still open: after its end mark it done if confirmed, otherwise cancelled; before its start store the accepted count and mark it confirmed at three or more, cancelled if past the cutoff, otherwise forming; report whether the cutoff has passed
     returns event, group, status, locked
-  where an action precondition fails
-  then
-    refuses EVENT_UNAVAILABLE "Check the action preconditions."
 reviewDue() : returns (review: Review)
   where preconditions hold
   then
     using stored accepted counts, cancel open events past cutoff with fewer than three accepted and finish ended events, recording the changes under a new review
     returns review
 cancel(event: Event) : returns (event: Event, group: Group)
-  where action preconditions hold
+  where the event has started or is done
   then
-    apply the documented state transition atomically
+    refuses EVENT_UNAVAILABLE "Only upcoming events can be cancelled."
+  where preconditions hold
+  then
+    mark the event cancelled
     returns event, group
-  where an action precondition fails
-  then
-    refuses EVENT_UNAVAILABLE "Check the action preconditions."
 ```
 ## Queries
 ```queries
 _limits() : one (limits: String)
   Read the largest venue seat count per area as JSON.
 _all() : many (event: Event, group: Group)
-  Read the owned state without changing it.
+  Read every event with its group.
 _planned(plan: Plan) : many (event: Event, group: Group, start: Number, end: Number, capacity: Number, deadline: Number, details: String)
   Read the events of a plan with their response deadline and display details.
 _members(event: Event) : many (invitee: User, request: Request)
@@ -72,11 +72,11 @@ _members(event: Event) : many (invitee: User, request: Request)
 _placed(plan: Plan) : one (placed: String)
   Read the request ids seated by a plan as a JSON array.
 _get(event: Event) : many (details: String)
-  Read the owned state without changing it.
+  Read the event's display details as JSON.
 _deliveries() : many (event: Event, group: Group, start: Number, end: Number, capacity: Number, deadline: Number, details: String)
   Read upcoming open events whose invitations may still be delivered.
 _admin() : one (events: String)
-  Read the owned state without changing it.
+  Read every event with its size as JSON, for operators.
 _reviewed(review: Review) : many (event: Event, group: Group, status: String)
   Read the events whose status a review changed.
 ```
