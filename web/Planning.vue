@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { api } from './api';
-import { addDays, bostonTime, leadDays as LEAD_DAYS, localDay, locations, radii, suggestedTags } from '../shared/catalog';
+import { addDays, bostonTime, leadDays as LEAD_DAYS, localDay, locations, radii, suggestedTags, didYouMean, normalizeTag } from '../shared/catalog';
 type RequestView = { request: string; date: string; start: number; end: number; selected: string; location: string; radius: number; status: string; reason: string };
 // Default event length, for the client-side hint only; the server enforces EVENT_HOURS.
 const EVENT_HOURS = 2;
@@ -40,6 +40,13 @@ async function act(work: () => Promise<unknown>, message: string) {
   busy.value = true; error.value = ''; notice.value = '';
   try { await work(); await refresh(); notice.value = message; } catch (e) { error.value = (e as Error).message; } finally { busy.value = false; }
 }
+const suggestion = computed(() => didYouMean(custom.value));
+/** The custom box only ever adds; toggling there would silently remove an interest the user retyped. */
+function addCustom(value: string) {
+  custom.value = '';
+  if (tags.value.includes(normalizeTag(value))) { notice.value = `"${normalizeTag(value)}" is already one of your interests.`; return; }
+  return act(() => api('/profile/addInterest', { tag: value }), 'Interests saved.');
+}
 function tag(value: string) { return act(() => api(tags.value.includes(value) ? '/profile/removeInterest' : '/profile/addInterest', { tag: value }), 'Interests saved.'); }
 function submit() {
   if (formProblem.value) { error.value = formProblem.value; return; }
@@ -50,7 +57,7 @@ function submit() {
 onMounted(() => act(refresh, ''));
 </script>
 <template><section><div class="page-heading"><div><p class="eyebrow">MAKE A LITTLE SPACE</p><h1>What are you up for?</h1><p>Choose your interests, then tell us when you're free.</p></div><button :disabled="busy" @click="act(refresh, '')">Refresh plans</button></div><p v-if="error" role="alert" class="notice">{{ error }}</p><p v-if="notice" role="status" class="notice">{{ notice }}</p>
-<div class="planning-grid"><section class="panel"><h2>Your creative interests</h2><p class="hint">No experience needed. Pick up to 12.</p><div class="actions"><button v-for="item in [...new Set([...suggestedTags, ...tags])]" :key="item" :class="{ primary: tags.includes(item) }" :aria-pressed="tags.includes(item)" :disabled="busy" @click="tag(item)">{{ item }}</button></div><form class="custom-interest" @submit.prevent="tag(custom); custom = ''"><label>Something else?<input v-model="custom" maxlength="40" minlength="2" required placeholder="Your creative interest"></label><button :disabled="busy">Add interest</button></form></section>
+<div class="planning-grid"><section class="panel"><h2>Your creative interests</h2><p class="hint">No experience needed. Pick up to 12.</p><div class="actions"><button v-for="item in [...new Set([...suggestedTags, ...tags])]" :key="item" :class="{ primary: tags.includes(item) }" :aria-pressed="tags.includes(item)" :disabled="busy" @click="tag(item)">{{ item }}</button></div><form class="custom-interest" @submit.prevent="addCustom(custom)"><label>Something else?<input v-model="custom" maxlength="40" minlength="2" required placeholder="Your creative interest"></label><p v-if="suggestion" class="hint" role="status">Did you mean <b>{{ suggestion }}</b>? <button type="button" :disabled="busy" @click="addCustom(suggestion)">Use {{ suggestion }}</button></p><button :disabled="busy">Add interest</button></form></section>
 <section class="panel"><h2>Request a JAM</h2>
 <template v-if="open.length"><article v-for="r in open" :key="r.request"><span class="tag">{{ r.status === 'PENDING' ? 'Waiting for matching' : 'Matched' }}</span><p>{{ pretty(r.date) }}, {{ clock(r.start) }} – {{ clock(r.end) }} · {{ r.selected || 'Surprise me' }} · within {{ r.radius }} mi of {{ r.location }}</p><p v-if="r.status === 'MATCHED'">You have a group. Open Invitations to respond.</p><button v-if="r.status === 'PENDING'" :disabled="busy" @click="act(() => api('/requests/withdraw', { request: r.request }), 'Request withdrawn. You can choose a new date.')">Withdraw request</button></article></template>
 <form v-else novalidate @submit.prevent="submit">

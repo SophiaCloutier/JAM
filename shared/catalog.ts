@@ -9,6 +9,21 @@ export function normalizeTag(tag: string) {
   const aliases: Record<string, string> = { sketching: 'drawing', sketches: 'drawing', ceramics: 'pottery', scrapbook: 'scrapbooking', 'paper collage': 'collage', vocals: 'singing', 'creative-writing': 'creative writing' };
   return aliases[normalized] ?? normalized;
 }
+/** Typo distance: single-letter inserts, deletes, substitutions and swaps of neighbouring letters. */
+export function editDistance(a: string, b: string) {
+  const d = Array.from({ length: a.length + 1 }, (_, i) => Array.from({ length: b.length + 1 }, (_, j) => i || j));
+  for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++) {
+    d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+  }
+  return d[a.length][b.length];
+}
+/** The suggested tag a custom entry probably meant: 1 typo allowed under 6 letters, 2 from 6 up. Exact matches return nothing. */
+export function didYouMean(tag: string) {
+  tag = normalizeTag(tag);
+  if (suggestedTags.includes(tag)) return undefined;
+  return suggestedTags.find(s => editDistance(tag, s) <= (Math.min(tag.length, s.length) < 6 ? 1 : 2));
+}
 export function similarity(a: string, b: string) { return a === b ? 1 : categories[a] && categories[a] === categories[b] ? 0.7 : 0; }
 export const minimumSimilarity = 0.7;
 
