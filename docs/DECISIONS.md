@@ -1,10 +1,10 @@
 # Alpha implementation decisions
 
-The user's request is to implement two local branches incrementally with the sync engine and a simple black-and-white UI. Attached course/team documents are design inputs, not permission to publish, submit coursework, send messages, or push. The user explicitly prohibited pushing.
+This file records significant implementation decisions for the alpha, in the order they were made, and why. Much of the code was generated with AI coding agents; each increment notes how it was reviewed, and [VALIDATION.md](VALIDATION.md) records what was run.
 
-The November 20 architecture PDF is the current product baseline where it differs from ConceptDesign.md and the older team docs. In particular: interest-only profiles; one slot per request; final invitation decisions; six-hour response window; strikes for cancelling after acceptance; unstructured activities. Historical F3 documents remain intact.
+The team's November 20 architecture document became the product baseline where it differed from the original F3 concept design. In particular: interest-only profiles, one time slot per request, final invitation decisions, a six-hour response window, strikes for cancelling after acceptance (later removed, see Increment 3), and unstructured activities only. On November 23, [ProblemFraming.md](../ProblemFraming.md) and [ConceptDesign.md](../ConceptDesign.md) were updated to describe the implementation; earlier versions are in the Git history.
 
-The user's personal project is a structural reference: Vue, Bun, MongoDB, registered Markdown concept specs, declarative compositions, HTTP cookie policy, and generated contracts. JAM uses the same pinned course engine and HTTP adapter, not a homemade event bus. The published package supersedes the architecture PDF's explicitly tentative older `actions/frames` pseudocode.
+The app uses Vue, Bun and MongoDB, with Markdown concept specifications registered with the course's sync engine (`@mit-sdg/sync-engine`), declarative compositions, a cookie-based HTTP policy, and generated contracts. We use the course engine and HTTP adapter rather than a homemade event bus.
 
 Inviting owns the active-invitation lock and response state. MongoDB partial unique indexes protect one active invitation; conditional updates protect answer-once decisions even across competing requests. A strike is derived from an immutable cancellation flag on the invitation, avoiding a second counter write that could double count or be lost. Event shutdown uses `closeEvent` and never adds a strike.
 

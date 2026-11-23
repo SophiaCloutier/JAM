@@ -38,259 +38,455 @@ Comparable Apps
 
 # Solution sketch
 
-JAM is a low-stakes app that connects beginners in Boston who want to explore creative hobbies and make art with others. Users create a profile by listing their creative skills, interests, location preferences, and availability. Based on these preferences, JAM automatically generates local creative events and invites users to participate in one event at a time, giving them the option to accept or decline without any ongoing commitment.
+JAM is a low-stakes app that connects beginners in Boston who want to explore creative hobbies and make art with others. Users sign up with a college (.edu) email and list the creative interests they would like to try, choosing from suggested tags or writing their own. No experience is needed.
 
-For activities that require complementary skills, such as forming a band or hosting a jam session, JAM brings together participants who can fill the necessary roles. For more casual activities, such as drawing or scrapbooking, it matches people based on shared interests, availability, and location preferences.
+When they have free time, users request a JAM for a date at least two days ahead. A request gives a free-time window, a starting location with how far they are willing to travel, and either one interest they want to do or "Surprise me" (any of their interests). The day before the date, JAM groups requests into small groups of at least three people with the same or a related interest (painting and drawing, for example), overlapping free time, and a meeting area everyone can reach. It then plans each group's event at a café in that area, at a time when the café is open and has seats.
 
-JAM lifts the matching and scheduling burden off users, reducing the pressure to approach potential collaborators individually or coordinate an event themselves. Each event is a standalone opportunity to make art together, develop creative skills, and meet people with similar interests; whether participants keep in touch afterward is up to them. This makes it easier for beginners to step outside their comfort zones and explore creative interests they might otherwise miss out on due to limited connections or confidence.
+Each member receives one invitation at a time and has six hours to accept or decline, with no ongoing commitment. An event is confirmed once three people accept and is cancelled if it does not reach three by eight hours before it starts. Anyone who could not be placed is told why and can request another date.
+
+JAM lifts the matching and scheduling burden off users, reducing the pressure to approach potential collaborators individually or coordinate an event themselves. Each event is a standalone opportunity to make art together and meet people with similar interests; whether participants keep in touch afterward is up to them.
+
+Activities that need complementary skills, such as forming a band, and separating skills from interests are planned for later and are not part of the current version.
 
 # Ethical analysis
 
+Each insight's design response is followed by its status in the current version.
+
 ## Insight \#1
 
-Dimension: Pervasiveness
-Prompt: Widespread Use
-Feature: Event generation
-Observation: Below a certain number of users, the pool of people sharing skills, interests and availability is too small.
-Consequence: Some users may be matched with the same people over and over again, or never matched at all. As adoption grows, the pool widens matches become more varied.
-Design response: Use a history-aware randomized match to avoid repeat pairings and prioritize users not invited recently.
+Dimension: Pervasiveness  
+Prompt: Widespread Use  
+Feature: Event generation  
+Observation: Below a certain number of users, the pool of people sharing interests and availability is too small.  
+Consequence: Some users may be matched with the same people over and over again, or never matched at all. As adoption grows, the pool widens and matches become more varied.  
+Design response: Widen each pool by matching related interests, not only identical ones, and let users choose "Surprise me" to be matched on any of their interests. Prefer people who have not met recently.  
+Current status: Related-interest matching and "Surprise me" are implemented. Users who are not matched are told why and can request another date. History-aware matching is not yet implemented.
 
 ## Insight \#2
 
-Dimension: Stakeholders
-Prompt: Indirect stakeholders
-Feature: Event locations
-Observation: The app places events in public cafes around Cambridge, but per our initial design, cafe staff and regular customers never opted into JAM.
-Consequence: If many events map to the same cafe, groups can fill tables for hours, crowd out paying customers, and frustrate cafe staff.
-Design response: Cap events per venue per day, aim for a large enough list of cafes so that a truly random algorithm avoids clashes, and perhaps introduce an opt-in option for cafe owners.
+Dimension: Stakeholders  
+Prompt: Indirect stakeholders  
+Feature: Event locations  
+Observation: The app places events in public cafés around Cambridge and Boston, but café staff and regular customers never opted into JAM.  
+Consequence: If many events map to the same café, groups can fill tables for hours, crowd out paying customers, and frustrate café staff.  
+Design response: Give each venue a JAM seat count, a daily event limit, and opening hours; make overlapping events at one venue share its seats; spread events across venues; and eventually let café owners opt in.  
+Current status: Seat counts, daily limits, opening hours, shared seats, and spreading across venues are implemented. The venue list contains sample cafés, not partnerships, and owner opt-in is future work.
 
 ## Insight \#3
 
-Dimension: Time
-Prompt: Long-term use
-Feature: No in-app messaging
-Observation: JAM has no way to message or follow other attendees, so connections must continue in person.
-Consequence: Event attendees who would like to pursue a friendship are forced to favor in-person interactions and exchange information on their own terms. Also, no one will be able to contact them uninvited.
-Design response: Keep messaging out, and end each event with an in-app prompt encouraging attendees to swap contact details in person for shy beginners who might need a push.
+Dimension: Time  
+Prompt: Long-term use  
+Feature: No in-app messaging  
+Observation: JAM has no way to message or follow other attendees, so connections must continue in person.  
+Consequence: Event attendees who would like to pursue a friendship are forced to favor in-person interactions and exchange information on their own terms. Also, no one will be able to contact them uninvited.  
+Design response: Keep messaging out, and end each event with an in-app prompt encouraging attendees to swap contact details in person.  
+Current status: There is no messaging. The end-of-event prompt is not yet implemented.
 
 ## Insight \#4
 
-Dimension: Stakeholders
-Prompt: Direct Stakeholders
-Feature: RSVP
-Observation: Users accept an invitation to a small group event, but someone may accept and then not attend.
-Consequence: Other participants waste time, and the event may not be as fun as it was intended when proposed.
-Design response: Require a small deposit when accepting, refunded upon attendance or cancellation before a clearly stated deadline. Provide deposit waivers and emergency exceptions via admin contact so accountability does not exclude users with limited funds or penalize unavoidable absences.
+Dimension: Stakeholders  
+Prompt: Direct Stakeholders  
+Feature: RSVP  
+Observation: Users accept an invitation to a small group event, but someone may accept and then not attend.  
+Consequence: Other participants waste time, and the event may not be as fun as it was intended when proposed.  
+Design response: Make answers firm and time-limited, explain the consequences before a user cancels, and only hold an event once enough people commit. A deposit or reliability score remains under consideration.  
+Current status: Accepting or declining is final, invitations expire after six hours, users see a warning before cancelling after accepting, and an event is confirmed only at three acceptances. No deposit or penalty is implemented.
 
 ## Insight \#5
 
-Dimension: Values
-Prompt: Value Tension
-Feature: Automatic event matching
-Observation: Matching happens automatically according to shared skills, interests, availability, and location.
-Consequence: A beginner matched with advanced people may feel out of place, and an advanced person with beginners may feel unchallenged. Strict matching avoids this but limits learning, creating tension between proficiency and inclusion.
-Design response: Split profiles into skills (good at) and interests (want to learn). Default to beginner-friendly events; experience-required ones are opt-in.
+Dimension: Values  
+Prompt: Value Tension  
+Feature: Automatic event matching  
+Observation: Matching happens automatically according to shared interests, availability, and location.  
+Consequence: A beginner matched with advanced people may feel out of place, and an advanced person with beginners may feel unchallenged. Strict matching avoids this but limits learning, creating tension between proficiency and inclusion.  
+Design response: Present every event as beginner-friendly. Later, split profiles into skills (good at) and interests (want to learn), and make experience-required events opt-in.  
+Current status: Profiles hold interests only, and the app states that no experience is needed. The skills/interests split is planned for the beta.
 
 # Concept design
+
+This section describes the concepts as implemented in the alpha. The engine-format specifications in [design/concepts](design/concepts/) are the source of truth, the reactions are described in [design/compositions/Application.md](design/compositions/Application.md), and [docs/DECISIONS.md](docs/DECISIONS.md) records how and why each concept changed from the original F3 design.
+
+### **concept Authenticating**
+
+**purpose** let people prove they are returning users
+
+**principle** a person registers an eligible email with a password, then logs in with the same credentials; duplicate registrations and wrong passwords are refused
+
+**State**
+
+a set of Accounts with
+
+    an email String
+
+    a verifier String
+
+**Actions**
+
+register (email: String, password: String) : (user: User)
+
+**where** the email ends in .edu, the password is 10 to 128 characters, and no account has this email
+
+**then** normalize the email, store a hash of the password, create the account, and return the email as the user
+
+login (email: String, password: String) : (user: User)
+
+**where** an account with this email exists and the password matches its verifier
+
+**then** return the user
+
+**note** The .edu suffix is checked, but ownership of the mailbox is not verified in the alpha.
+
+### **concept Sessioning**
+
+**purpose** remember who is signed in
+
+**principle** starting a session for a user returns an opaque session that resolves to that user for seven days or until it is ended; only configured operators may authorize administrative work
+
+**State**
+
+a set of Sessions with
+
+    a subject User
+
+    an expiresAt DateTime
+
+**Actions**
+
+start (subject: User) : (session: Session, expiresAt: DateTime)
+
+**then** create a random session for the subject that expires in seven days
+
+current (session: Session) : (user: User)
+
+**where** the session exists and has not expired
+
+**then** return its subject
+
+end (session: Session)
+
+**then** delete the session if it exists
+
+authorize (session: Session) : (user: User)
+
+**where** the session exists, has not expired, and its subject is a configured operator
+
+**then** return its subject
 
 ### **concept Characterizing**
 
 **purpose** let users state relevant information about themselves
 
-**principle** a user creates a profile and adds interests and skills; that information stays on the profile, and can be read back until the user removes it
+**principle** a user creates a profile and adds interests; that information stays on the profile and can be read back until the user removes it; the user can add and remove interests at any point
 
 **State**
 
 a set of Profiles with
 
-A user User
+    a user User
 
-A set of Information
-
-a set of Information with
-
-    	a type InfoType
-
-    	a value String
-
-InfoType is one of INTEREST, SKILL
+    a set of interests String
 
 **Actions**
 
-create (user: User) : (Profile)
+create (user: User) : (user: User)
 
 **where** no profile with this user exists
 
-**then** create a new profile with this user and no information and return it
+**then** create a new profile with this user and no interests
 
-addInformation (profile: Profile, type: InfoType, value: String): (info: Information)
+addInterest (user: User, tag: String) : (tag: String)
 
-**where** this profile exists
+**where** a profile with this user exists, the normalized tag is 2 to 40 characters, and the profile has fewer than 12 other interests
 
-**then** creates info with the given type and value and adds it to this profile
+**then** normalize the tag (correcting a one-letter typo of a suggested tag) and add it to the profile's interests if it is not already there
 
-removeInformation (profile: Profile, info: Information):
+removeInterest (user: User, tag: String) : (tag: String)
 
-**where** this profile exists and this info is in the profile
+**where** a profile with this user exists
 
-**then** removes info from profile and deletes it
+**then** remove the normalized tag from the profile's interests if it is there
 
-**note** This concept allows users to create profiles with the interests and skills that will be used to match them with others in JAM. We currently focus on whether users have a particular skill rather than their proficiency in it so that events may organically mix skill levels and remain accessible to beginners.
+**note** The original design stored typed Information items (INTEREST or SKILL). The alpha keeps interests only, because matching uses only interests and the skills/interests split is planned for the beta. Each user has exactly one profile, so actions take the user rather than a profile.
 
-###
+### **concept Matching**
 
-### **concept EventGenerating**
+**purpose** group requests for the same date into clusters of compatible people, by interest similarity and availability
 
-**Purpose**  bring together users who share interests and are available at the same time and place
-
-**principle** users are added as candidates with interests, skills, times, and locations; the app matches compatible candidates and generates an event at a shared time and location, marks them as placed, and assigns them as its members; if the event is later deleted, they return to the pool and can be placed in another event
+**principle** a user submits one request for a date at least two calendar days ahead; when the date becomes due, its requests are matched together exactly once into clusters of at least three people who share a similar interest, a free-time window of at least the event length, and a reachable meeting area; requests left over are marked unmatched and their owners choose a new date
 
 **State**
 
-a set of Candidates with
+a set of Requests with
 
-A user User
+    a user User
 
-A set of Information
+    a date String
 
-A set of time ranges DateTime
+    a start DateTime
 
-A set of locations String
+    an end DateTime
 
-A placed Boolean
+    a selected interest String
 
-a set of Information with
+    a set of interests String
 
-        a type InfoType
+    a set of reachable areas String
 
-        a value String
+    a status Status
 
-InfoType is one of INTEREST, SKILL
+    a reason String
 
-a set of Groups with
+    a cluster Cluster
 
-        a set of candidates Candidate
+a set of Clusters with
 
-        a type EventType
+    a date String
 
-        a description String
+    a tag String
 
-        a set of required skills String
+    a status ClusterStatus
 
-        a time DateTime
+    an event Event
 
-        a location String
+a set of opened dates String
 
-EventType is one of STRUCTURED, UNSTRUCTURED
+Status is one of PENDING, MATCHED, UNMATCHED, WITHDRAWN, CLOSED
 
-a set of Events with
-
-        a group Group
-
-        a location String
-
-        a time DateTime
-
-        a description String
-
-        a set of members User
+ClusterStatus is one of FORMING, COMPLETE, GENERATED, FAILED, CLOSED
 
 **Actions**
 
-match (min: Number, max: Number): (group: Group)
+submit (user: User, date: String, start: DateTime, end: DateTime, selected: String, interests: String, location: String, radius: Number) : (request: Request)
 
-**where** min \<= max, there is a group of between min and max unplaced candidates with overlapping times and locations who collectively fill all required roles for a structured activity or share an interest for an unstructured activity
+**where** the date is at least two calendar days ahead and not yet matched, the window lies on that date and fits an event, the selected interest (if any) is one of the interests, some meeting area is within the radius, and the user has no open request
 
-**then** determine an appropriate activity and whether it is STRUCTURED or UNSTRUCTURED based on available candidates' interests and skills, select a group of compatible candidates that collectively fills all required roles for a structured activity or shares an interest for an unstructured activity, create a group with the selected candidates, activity description, required skills, shared time, and location, return the group
+**then** store a pending request with its reachable meeting areas and return it
 
-generateEvent (group: Group) : (event: Event)
+withdraw (user: User, request: Request) : (request: Request)
 
-**where** the group exists and no event already exists for this group
+**where** the request is the user's and is pending
 
-**then** create an event with the group's time, location, description, and candidates as members, mark the group's candidates as placed, return the event
+**then** mark it withdrawn
 
-addCandidate (user: User, info: set of Information, timeRanges: set of DateTime, locations: set of String) : (candidate: Candidate)
+openDue (force: Flag) : (run: Run)
 
-**where** no candidate for this user exists
+**then** record each date that is due (from the day before it) and has pending requests, exactly once; dates whose day has already arrived become unmatched as too late
 
-**then** create a candidate with the given information, time ranges, locations, and placed \= False, return the candidate
+form (date: String, stage: String, candidates: String, minScore: Number, limits: String)
 
-removeCandidate (user: User):
+**then** greedily form clusters of at least three pending candidates per interest with similarity at least minScore, within shared window, reach and venue capacity
 
-**where** a candidate for this user exists and it is not placed
+assign (date: String, stage: String, candidates: String, limits: String)
 
-**then** deletes this candidate
+**then** place each pending candidate in the forming cluster with the highest similarity of at least 0.7, then the fewest members
 
-delete (event:Event)
+finish (date: String)
 
-	**where** this event exists
+**then** mark the date's forming clusters complete and its remaining pending requests unmatched (NO_MATCH)
 
-	**then** delete the event, set placed \= False for all candidates associated with the event, delete its associated group
+settle (date: String, placed: String)
 
-**note** This concept handles matching users and generating structured or unstructured creative events based on their interests, skills, and availability. Structured events require participants who can fill specific roles, while unstructured events only require shared interests. Through compositions, we will connect event statuses with invitation responses. We are also wondering if a separate Venuing or CapacityTracking concept will be required to more rigorously handle location selection and delegation. Designing those features more thoughtfully will prevent overcrowding in common locations.
+**then** mark each complete cluster generated if any of its requests was seated at an event, otherwise failed, and mark matched requests that were not seated unmatched (NO_VENUE)
+
+close (cluster: Cluster)
+
+**then** mark the cluster closed
+
+reconcile (request: Request, status: String, active: Flag, reason: String)
+
+**then** when a matched request's invitation closes, mark it unmatched (EVENT_CANCELLED) if its event was cancelled, otherwise closed
+
+**note** Similarity is a fixed table: the same tag scores 1.0, tags in the same category (such as painting and drawing) score 0.7, and anything else scores 0. Matching never decides which interests a request offers; the reactions do. First, requests that chose an interest offer only that interest. Then every remaining request offers all of its profile interests, which is how "Surprise me" works. This concept replaces the matching half of the original EventGenerating concept. The specification also has activate and abandon actions for single clusters.
+
+### **concept EventGenerating**
+
+**purpose** turn a date's groups into concrete events at venues, within opening hours, venue seats, and each group's shared free time and reach
+
+**principle** each date is planned once: venues, start times, and splits are chosen so that every event has three to fifteen people, lies inside its group's shared window, is at a venue in one of the group's reachable areas, never pushes overlapping events at one venue past its seats, and keeps each venue within its daily event limit; people who cannot be seated are left out; an event is confirmed at three acceptances, cancelled if it is short of three at the cutoff, and done after it ends
+
+**State**
+
+a set of Plans with
+
+    a date String
+
+a set of Events with
+
+    a plan Plan
+
+    a group Group
+
+    a venue String
+
+    a tag String
+
+    a start DateTime
+
+    an end DateTime
+
+    an accepted Number
+
+    a status EventStatus
+
+    a set of members (User, Request)
+
+EventStatus is one of FORMING, CONFIRMED, CANCELLED, DONE
+
+**Actions**
+
+plan (date: String, clusters: String) : (plan: Plan)
+
+**then** reuse the date's existing plan, or plan events for the date's groups and store them with their seated members under a new plan
+
+review (event: Event, count: Number) : (event: Event, group: Group, status: String, locked: Flag)
+
+**where** the event exists
+
+**then** before the event starts, store the accepted count and mark it confirmed at three or more, cancelled if past the cutoff, otherwise forming; after it ends, mark it done if confirmed, otherwise cancelled
+
+reviewDue () : (review: Review)
+
+**then** cancel open events past the cutoff with fewer than three accepted and finish ended events, recording which events changed
+
+cancel (event: Event) : (event: Event, group: Group)
+
+**where** the event has not started and is not done
+
+**then** mark the event cancelled
+
+**note** The cutoff is eight hours before the start and events last two hours. The venues are sample cafés with seat counts, daily event limits, and opening hours; they are not reservations. EventGenerating has no notion of interest similarity.
 
 ### **concept Inviting**
 
-**purpose** ask users to join an event and respond so that the event knows who is coming
+**purpose** get a firm response to a time-limited invitation
 
-**principle**  an invitation to an event is sent to a user; the user can accept it and is then counted among those attending or decline it and is not counted; the invitation's status can be changed freely
+**principle** a person is invited once per event; they accept or decline before the deadline, and silence expires; an accepted invitation can be cancelled by its owner before the event starts; closing a cancelled event cancels its accepted invitations
 
 **State**
 
 a set of Invitations with
 
-An invitee User
+    an invitee User
 
-An event Event
+    an event Event
 
-A status Status
+    a request Request
 
-Status is one of PENDING, ACCEPTED, DECLINED
+    a status Status
+
+    a deadline DateTime
+
+    a start DateTime
+
+    an end DateTime
+
+    a details String
+
+    an active Flag
+
+    a reason String
+
+Status is one of PENDING, ACCEPTED, DECLINED, EXPIRED, CANCELLED
 
 **Actions**
 
-invite (invitee: User, event: Event) : (invitation: Invitation)
+invite (invitee: User, event: Event, request: Request, start: DateTime, end: DateTime, deadline: DateTime, details: String) : (invitation: Invitation)
 
-**where** no invitation for this event and invitee exists
+**where** the time window is valid and the invitee has no other active invitation
 
-**then** create a new invitation with this user and event with status PENDING, return the invitation
+**then** return the existing invitation for this invitee and event if there is one; otherwise create a pending, active invitation with its deadline capped at six hours
 
-accept (invitation: Invitation)
+accept (invitation: Invitation, invitee: User) : (event: Event, request: Request)
 
-**where** this invitation exists
+**where** the invitee owns the invitation and it is pending and active before its deadline
 
-**then** set this invitation’s status to ACCEPTED
+**then** set its status to ACCEPTED
 
-decline (invitation: Invitation):
+decline (invitation: Invitation, invitee: User) : (event: Event, request: Request)
 
-**where** this invitation exists
+**where** the invitee owns the invitation and it is pending and active before its deadline
 
-**then** set this invitation’s status to DECLINED
+**then** set its status to DECLINED and make it inactive
 
-**note** This concept allows JAM to invite matched users to generated events and track whether they accept or decline. Users can change their response to the invitation freely, which is expected behavior. However, we plan to penalize users for short-notice changes to discourage no-shows and add ons that inconvenience other members of events. We also need to determine how invitations should be handled if an event is deleted after invitations have been sent.
+cancel (invitation: Invitation, invitee: User) : (event: Event, request: Request)
 
-### **Reactions:**
+**where** the invitee owns the invitation and it is accepted and active before the event starts
+
+**then** set its status to CANCELLED and make it inactive
+
+closeEvent (event: Event, cancelled: Flag) : (event: Event)
+
+**then** expire overdue pending invitations for the event and make all of them inactive; if the event was cancelled, mark its active invitations cancelled
+
+**note** Answers are final; a user can no longer change them freely as in the original design. A pending invitation past its deadline reads as EXPIRED without any background job. Strikes for cancelling after accepting were designed but removed for the alpha.
+
+### **Reactions**
+
+The reactions are described in full in [design/compositions/Application.md](design/compositions/Application.md). The main chain is:
+
+reaction CreateProfile
+
+**when** Authenticating.register (): (user)
+
+**then** Characterizing.create (user)
+
+reaction Submit
+
+**when** a signed-in user submits a request
+
+**then** read the user's interests with Characterizing._get and pass them to Matching.submit, so later profile edits do not change the request
+
+reactions FormChosen, JoinChosen, JoinProfile, FormProfile, JoinLeftovers, Finish
+
+**when** Matching.openDue (): (run) opens a date
+
+**then** run Matching.form and Matching.assign in that order, first with chosen interests, then with profile interests, and finish the date
 
 reaction GenerateForMatch
 
-**when** EventGenerating.match(min, max): (group)
+**when** Matching.finish (date)
 
-**then** EventGenerating.generate(group)
+**then** EventGenerating.plan (date, the date's complete clusters)
 
 reaction InviteParticipants
 
-**when** EventGenerating.generate(group): (event)
+**when** EventGenerating.plan (): (plan)
 
-**then** for each user in the generated event's members, Inviting.invite(user, event)
+**then** for each member of each planned event, Inviting.invite (member, event, request, start, end, deadline, details)
 
-**note** Reactions connect the matching, event generation, and invitation processes so that invitations are automatically sent after an event is generated. We still need to determine how invitation responses should affect an event's status and whether an event should proceed if not enough users accept.
+reaction SettlePlan
+
+**when** EventGenerating.plan (): (plan)
+
+**then** Matching.settle (date, seated requests)
+
+reaction Confirm
+
+**when** Inviting.accept (): (event)
+
+**then** EventGenerating.review (event, accepted count)
+
+reactions CancelDue, FinishDue, ReconcileClosedEvent
+
+**when** EventGenerating.reviewDue (): (review) cancels or finishes an event
+
+**then** Inviting.closeEvent (event, cancelled), then Matching.reconcile for each closed invitation
+
+**note** Every endpoint resolves the user from the session cookie in the back end, and administrative endpoints use Sessioning.authorize. There is no clock concept: the server calls Matching.openDue and EventGenerating.reviewDue at startup and every five minutes.
 
 # User journey
 
 Percy is a freshman. He is finally feeling like he has settled into the MIT grind. He has a routine and is on top of his PSets. With midterms finishing up, he finds he has some free time. He remembers that in high school he had a number of creative outlets and finds that, in coming to MIT, he has let them fall by the wayside. He decides that he wants to get back into art and would love to find some people to do this with at MIT. This is where Percy hits a wall. He has no idea where to start. There is no “art” club at school, and joining an orchestra or play is a serious commitment. He asks his friends if they would be interested, but they are more into gaming, and he doesn’t get much enthusiasm. This is the end of Percy’s options right now, at least that he knows of, and so he gives up and just spends his free time scrolling instead. This is where JAM comes in.
-Later, his friend Omar replies. Omar isn’t interested in painting, but he mentions that maybe Percy could find someone on JAM. Percy is curious, so he visits the website and creates an account using his .edu email. JAM prompts him to enter his skills, creative pursuits he has some experience with, and his interests, regardless of experience. He lists painting as a skill. While he can write in his own answers, suggested tags help him think of other activities he might enjoy. He selects scrapbooking because he has been meaning to start a junk journal of his time at MIT. Finally, he enters his availability, including Sunday evening, and indicates that he would like to meet on campus.
-After completing his profile, Percy receives an invitation through JAM. He opens it and sees an arts and crafts night focused on scrapbooking, this Sunday at 5 pm at Hayden. JAM has matched him with other students who share his interest and are available at the same time and location. The gathering fits his schedule and gives him a chance to get back into art without taking on an ongoing commitment. Percy clicks Accept and confirms his attendance.
-On Sunday, Percy shows up to Hayden with a couple of clippings and a notebook. As he works on his junk journal, he talks with the other students about the memories they are putting into their scrapbooks. He leaves a few hours later with a journal of old memories and some new friends to make new ones with.
+
+Later, his friend Omar replies. Omar isn’t interested in painting, but he mentions that maybe Percy could find someone on JAM. Percy is curious, so he visits the website and creates an account using his .edu email. JAM asks what he would like to make and reminds him that no experience is needed. He picks painting from the suggested tags. When he types “scrapbooking” with a typo, JAM asks whether he meant the suggested tag, and he adds it; he has been meaning to start a junk journal of his time at MIT.
+
+Next, Percy requests a JAM. He picks Sunday, which is more than two days away, says he is free from 3 to 8 pm, chooses scrapbooking as what he wants to do, and says he is starting from MIT campus and will travel up to a mile. JAM tells him his request is waiting for matching.
+
+On Saturday, JAM matches Sunday’s requests. Percy and four other students who want to scrapbook and are free that afternoon on campus form a group, and JAM plans their event at a campus café that is open and has seats. Percy receives an invitation for scrapbooking on Sunday at 5 pm and sees that he has six hours to answer. The gathering fits his schedule and gives him a chance to get back into art without taking on an ongoing commitment. He clicks Count me in, and once two more people accept, the JAM is confirmed.
+
+On Sunday, Percy shows up with a couple of clippings and a notebook. As he works on his junk journal, he talks with the other students about the memories they are putting into their scrapbooks. He leaves a few hours later with a journal of old memories and some new friends to make new ones with.
+
+If too few people had wanted to scrapbook that day, JAM would have tried to match Percy with a related interest instead. Had that also failed, his plans page would have told him that no group formed for Sunday and invited him to choose another date, keeping scrapbooking selected.
 
 # Visual design study
 
@@ -298,15 +494,15 @@ On Sunday, Percy shows up to Hayden with a couple of clippings and a notebook. A
 
 # Design summary
 
-Our design aims to make creative hobbies in a group setting feel approachable, so we are using pastel colors for backgrounds/big blocks. But we want buttons and text to be noticeable, so brighter/more vivid colors for those.
+Our design aims to make creative hobbies in a group setting feel approachable. The visual study uses pastel colors for backgrounds and large blocks, with brighter, more vivid colors for buttons and text so they stay noticeable. The alpha uses a plain black-and-white layout while the interaction design settles; the pastel visual design is planned for the beta.
 
-Whether the app feels low-stakes also depends on who a user gets matched with. Thus, we need the app to be skill level aware, so as to avoid a situation where a user gets matched with a group too experienced, and therefore leaves discouraged; or a group too inexperienced, and therefore leaves feeling like the event wasn't worth their time. Maybe we can add a question asking, what skill level of the people you are being matched with would you be comfortable with? And then matched based on that.
+Whether the app feels low-stakes also depends on who a user is matched with. The alpha keeps profiles to interests only and presents every event as needing no experience. Splitting skills from interests, and possibly asking what skill level a user is comfortable with, are planned for the beta.
 
-On another note, to avoid overbooking of a location, we are aiming first of all for a large enough pool of locations we can suggest for events. But since we cannot really control pool size, we have a cap of events per day and time per location. This way, we hope to avoid venue complaints of an oversupply of customers. On top of this, our event generating algorithm will be as randomized as possible so as to avoid clashes.
+To avoid overbooking a location, each venue has a JAM seat count, a daily event limit, and opening hours, and overlapping events at one venue share its seats. Ties are spread across venues so that events do not cluster at one café. The current venues are sample cafés, not partnerships.
 
-Finally, The secondary purpose of this app is to promote in-person connections, which motivates two more decisions. First, we think having the option to message beforehand can ruin that magic by allowing users to change meeting times and/or form a judgement of who they are meeting beforehand. That is why we don't provide a messaging service. We are looking for that butterfly feeling, in a safe way. Second, for the same reason, we would like to avoid match repeats. Our match making algorithm will be history aware, so as not to match the same 2 people again. In the future we could add a “would you be open to matching with this person again in the future?” question if we see this affects the pool, but this might also break anonymity. Another idea is to give names and contact details per user preferences at the end of the event for the users that choose to allow others to contact them that way- this can solve the shyness issue too.
+A secondary purpose of this app is to promote in-person connections, which motivates two more decisions. First, we think messaging beforehand can ruin that magic by letting users renegotiate meeting times or judge who they are meeting in advance, so JAM has no messaging. Second, we would like to avoid repeat matches. Matching is currently deterministic and not yet history-aware; preferring people who have not met recently is future work. Sharing contact details at the end of an event, for those who opt in, is another idea for later.
 
-Some other things are still TBD. The main one is the method of incentivizing people to show up: deposit? score?
+To encourage people to show up, answers are firm: accepting or declining is final, invitations expire after six hours, a warning explains the consequences before a user cancels after accepting, and an event only goes ahead once three people accept. Whether to add a deposit or a reliability score is still undecided.
 
 # Development plan
 
@@ -326,19 +522,19 @@ Deliverables, checkpoint date, responsibility, key risks and how we will mitigat
 | Invitations & syncs | Inviting, both reactions, inbox UI | Sophia | Milin | Estrella | Rachel |
 | App shell & integration | Repo, DB, router, layout, seed data, deploy | Rachel | Estrella | Sophia | Milin |
 
-F4 Alpha deliverables:
+F4 Alpha deliverables, as delivered:
 
-* **Profiles & accounts:** sign-up/login, create/addInformation/removeInformation, profile page with skills, interests, availability and location.
-* **Matching & events:** addCandidate, removeCandidate, addLocation, match (unstructured plus simple structured), generate with a capacity check, and delete.
-* **Invitations & sync:** invite/accept/decline, the GenerateForMatch and InviteParticipants reactions, and an invitation inbox page.
-* **App shell & integration:** repo skeleton, routing, DB connection, auth stub, seed script, API wiring, layout and deploy.
+* **Profiles & accounts:** sign-up, login and logout with session cookies; Characterizing with create, addInterest and removeInterest; interest selection with suggested tags, custom tags and a "did you mean" nudge for typos. Skills, and availability and location on the profile, moved out of scope: availability and location are given per request instead.
+* **Matching & events:** a new Matching concept for date-based requests and once-per-date matching by interest similarity, shared free time and reach; EventGenerating plans venues, start times and splits within seats, daily limits and opening hours, and confirms, cancels or finishes events. Structured activities were deferred.
+* **Invitations & sync:** invite, accept, decline, cancel and closeEvent with six-hour deadlines and final answers; the reactions that plan events, invite members, update accepted counts and close requests; the invitation inbox.
+* **App shell & integration:** Vue and Bun app on the course sync engine with MongoDB, cookie authentication, admin "Run matching" and cancel controls, seed scripts, generated API contracts, and tests. Deployment is still outstanding.
 
-F5 Beta deliverables:
+F5 Beta deliverables (remaining):
 
 * **Profiles & accounts:** skills vs. interests split, beginner-friendly default, and the comfort question and contact opt-in as stretch items.
-* **Matching & events:** history-aware randomized matching, per-venue/day cap, overlapping reservations, and handling of failed matches.
-* **Invitations & sync:** CONFIRMED/CANCELED rules, invitations on a deleted event, and the no-show incentive.
-* **App shell & integration:** event and “my events” views, error and empty states, and an admin “run matching” button.
+* **Matching & events:** history-aware matching, a related-interest fallback when a group cannot be seated, and backfill after declines.
+* **Invitations & sync:** the no-show incentive, a possible 24-hour response window, and whether CANCELLED should mean only "event cancelled".
+* **App shell & integration:** deployment, a pastel visual design, and a "my events" view.
 
 | Risk | Mitigation | Fallback |
 | ----- | ----- | ----- |
@@ -349,3 +545,12 @@ F5 Beta deliverables:
 | No-show incentive is undecided (deposit vs. score). | Start with penalizing short-notice changes, with a clear cancellation deadline. | No penalty, only the deadline and a reminder. |
 | Beginners get matched with groups that are too experienced or too inexperienced. | Skills/interests split and beginner-friendly default. The comfort question is a stretch item. | Keep only the split and default, and let events mix skill levels. |
 
+
+Risk outcomes at alpha:
+
+* **Structured matching:** we took the fallback. The alpha matches unstructured activities on shared or related interests, time and location.
+* **Small pool:** related-interest matching and "Surprise me" widen each pool, and unmatched users are told why and choose another date. History-aware matching is not yet implemented.
+* **Venue overbooking:** per-venue seats, daily limits and opening hours are enforced, and overlapping events share a venue's seats.
+* **Event rules:** an event is confirmed at three acceptances and cancelled if it is short of three eight hours before it starts. Cancelling an event cancels its invitations, and admins can cancel events.
+* **No-show incentive:** answers are final and time-limited, with a warning before cancelling after accepting. No penalty yet.
+* **Beginner fit:** events are presented as needing no experience. The skills/interests split remains for the beta.

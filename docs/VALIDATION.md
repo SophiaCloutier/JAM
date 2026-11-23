@@ -29,3 +29,15 @@ New and changed tests:
 - `tests/full-journey.test.ts`: existing tests unchanged; new journey where eight people share a window in which only a six-seat café is open, so six are invited and two get `NO_VENUE`.
 
 Observed by the implementer (agent) on 2026-11-23: `bun run generate`, `bun run check` (same 19 `MISSING_ENDPOINT_FALLBACK` advisories as before) and `bun run build` pass. Docker and MongoDB were not available on that machine. The planner, boundary and catalog tests pass. The Matching and EventGenerating test files pass (23 tests) against an in-memory stand-in for `AtomicState` and `database()`. **Not yet run:** any test against real MongoDB, the full HTTP journeys (including the new `NO_VENUE` one), the Inviting, Characterizing and HTTP tests, and a browser walkthrough. Run `docker compose up -d` then `bun test`.
+
+## Characterizing and full run against MongoDB (2026-11-23)
+
+New tests:
+- `tests/characterizing.test.ts` (concept, real MongoDB, setup only through Characterizing actions): create, add, read back and remove; a second profile is refused (`PROFILE_EXISTS`); add and remove without a profile are refused (`PROFILE_NOT_FOUND`) and create nothing; normalization, aliases, one-letter typo correction against suggested tags, and no duplicates; invalid tags and a 13th interest are refused without changing the profile; removing an absent tag changes nothing; profiles are independent per user.
+- `tests/catalog.test.ts`: the "did you mean" suggestion catches missing, swapped and substituted letters of suggested tags, and suggests nothing for exact tags, aliases, unrelated words, or short words two edits away.
+
+Observed by Milin on 2026-11-23 with Bun 1.4.2 and MongoDB 8.3 in Docker: `bun test` passes 56 tests across 9 files (804 assertions), including every file listed above as not yet run (Inviting, HTTP and full-journey tests against real MongoDB). `bun run check` (same 19 `MISSING_ENDPOINT_FALLBACK` advisories) and `bun run build` pass. Browser check: registering, signing in, choosing interests and filling in the request form at `http://localhost:3000`.
+
+Found while testing: opening the app at `http://127.0.0.1:3000` instead of the configured `PUBLIC_ORIGIN` makes every request fail with "You do not have permission for this action." This is the intended cross-origin protection; the README now says to use the exact origin. The disabled "Find me a JAM" button showed a loading cursor and hid its reason until a date was chosen; it now shows a not-allowed cursor and always states what is missing.
+
+**Not yet done:** deployment, a narrated recording, and a full browser walkthrough of matching, invitations and event confirmation.
