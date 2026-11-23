@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "target": "ESNext", "module": "ESNext", "moduleResolution": "Bundler",
+    "lib": ["ESNext", "DOM"], "strict": true, "skipLibCheck": true,
+    "allowImportingTsExtensions": true, "noEmit": true, "types": ["vite/client"]
+  },
+  "include": ["web/**/*.ts", "web/**/*.vue", "shared/**/*.ts"]
+}

@@ -1,0 +1,9 @@
+import { conceptSet } from '@mit-sdg/sync-engine/assembly';
+import { authenticating } from './concepts/Authenticating.registry.ts';
+import { sessioning } from './concepts/Sessioning.registry.ts';
+import { inviting } from './concepts/Inviting.registry.ts';
+import { characterizing } from './concepts/Characterizing.registry.ts';
+import { matching } from './concepts/Matching.registry.ts';
+import { eventgenerating } from './concepts/EventGenerating.registry.ts';
+export const applicationConceptSet = conceptSet({ Authenticating: authenticating, Sessioning: sessioning, Inviting: inviting, Characterizing: characterizing, Matching: matching, EventGenerating: eventgenerating });
+export const { concepts } = applicationConceptSet;
