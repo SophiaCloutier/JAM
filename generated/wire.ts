@@ -39,7 +39,7 @@ export type JamWire = {
       "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["authorize"]>[0], ["session"]>>;
     };
     output: {
-      "tick": Jsonify<AtPath<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["Clock"]["hourly"]>>, ["tick"]>>;
+      "run": Jsonify<AtPath<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["Matching"]["openDue"]>>, ["run"]>>;
     };
     error: { error: AppWideError | "FORBIDDEN" | "INVALID_INPUT" | "INVITATION_UNAVAILABLE" | "UNKNOWN_SESSION" };
   };
@@ -136,7 +136,6 @@ export type JamWire = {
     output: {
       "inbox": {
         "invitations": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["Inviting"]["_mine"]>>>, ["invitations"]>>;
-        "strikes": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["Inviting"]["_mine"]>>>, ["strikes"]>>;
       };
     };
     error: { error: AppWideError | "INVALID_INPUT" | "UNKNOWN_SESSION" };
@@ -185,8 +184,11 @@ export type JamWire = {
   };
   "/requests/submit": {
     input: {
-      "areas": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Matching"]["submit"]>[0], ["areas"]>>;
+      "date": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Matching"]["submit"]>[0], ["date"]>>;
       "end": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Matching"]["submit"]>[0], ["end"]>>;
+      "location": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Matching"]["submit"]>[0], ["location"]>>;
+      "radius": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Matching"]["submit"]>[0], ["radius"]>>;
+      "selected": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Matching"]["submit"]>[0], ["selected"]>>;
       "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
       "start": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Matching"]["submit"]>[0], ["start"]>>;
     };
@@ -203,7 +205,7 @@ export type JamWire = {
     output: {
       "request": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Matching"]["withdraw"]>[0], ["request"]>>;
     };
-    error: { error: AppWideError | "INVALID_INPUT" | "INVALID_SLOT" | "SLOT_UNAVAILABLE" | "UNKNOWN_SESSION" };
+    error: { error: AppWideError | "INVALID_INPUT" | "SLOT_UNAVAILABLE" | "UNKNOWN_SESSION" };
   };
 };
 
@@ -231,7 +233,7 @@ export type JamWireHttp = {
   "/admin/run": {
     input: Record<string, never>;
     output: {
-      "tick": Jsonify<AtPath<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["Clock"]["hourly"]>>, ["tick"]>>;
+      "run": Jsonify<AtPath<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["Matching"]["openDue"]>>, ["run"]>>;
     };
     error: { error: HttpAppWideError | "CONFLICT" | "FORBIDDEN" | "INVALID_REQUEST" | "UNAUTHORIZED" };
   };
@@ -313,7 +315,6 @@ export type JamWireHttp = {
     output: {
       "inbox": {
         "invitations": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["Inviting"]["_mine"]>>>, ["invitations"]>>;
-        "strikes": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["Inviting"]["_mine"]>>>, ["strikes"]>>;
       };
     };
     error: { error: HttpAppWideError | "INVALID_REQUEST" | "UNAUTHORIZED" };
@@ -356,8 +357,11 @@ export type JamWireHttp = {
   };
   "/requests/submit": {
     input: {
-      "areas": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Matching"]["submit"]>[0], ["areas"]>>;
+      "date": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Matching"]["submit"]>[0], ["date"]>>;
       "end": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Matching"]["submit"]>[0], ["end"]>>;
+      "location": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Matching"]["submit"]>[0], ["location"]>>;
+      "radius": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Matching"]["submit"]>[0], ["radius"]>>;
+      "selected": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Matching"]["submit"]>[0], ["selected"]>>;
       "start": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Matching"]["submit"]>[0], ["start"]>>;
     };
     output: {

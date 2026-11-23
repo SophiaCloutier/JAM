@@ -4,9 +4,9 @@ if (process.env.NODE_ENV === 'production' && (!process.env.MONGODB_URI || !proce
   throw new Error('Production requires MONGODB_URI and PUBLIC_ORIGIN in the environment.');
 await database().command({ ping: 1 });
 const app = buildServer();
-await app.tick();
-const interval = setInterval(() => void app.tick().catch(e => console.error('Clock failed:', e)), 5 * 60000);
-const hourly = setInterval(() => void app.match().catch(e => console.error('Matching failed:', e)), 3600000);
+// Scheduled work runs at startup and every five minutes. Repeats are harmless: each date is matched once.
+await app.poke();
+const interval = setInterval(() => void app.poke().catch(e => console.error('Scheduled work failed:', e)), 5 * 60000);
 const server = Bun.serve({ hostname: '0.0.0.0', port: Number(process.env.PORT ?? 3000), maxRequestBodySize: 32768,
   async fetch(request) {
     const path = new URL(request.url).pathname;
@@ -22,5 +22,5 @@ const server = Bun.serve({ hostname: '0.0.0.0', port: Number(process.env.PORT ??
   },
 });
 console.log(`JAM is running at ${server.url}`);
-async function stop() { clearInterval(interval); clearInterval(hourly); await server.stop(); await app.application.beginDrain(); await closeDatabase(); process.exit(0); }
+async function stop() { clearInterval(interval); await server.stop(); await app.application.beginDrain(); await closeDatabase(); process.exit(0); }
 process.on('SIGINT', stop); process.on('SIGTERM', stop);

@@ -24,6 +24,5 @@ instantiate Matching with
   User is Person
   Event is Event
 instantiate EventGenerating with
-  Group is Matching.Group
-instantiate Clock
+  Group is Matching.Cluster
 ```

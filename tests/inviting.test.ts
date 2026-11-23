@@ -14,7 +14,7 @@ test('operational principle: deliver, accept, cancel exactly once', async () => 
   expect((await inviting._count({ event: 'event' })).count).toBe(1);
   await inviting.cancel({ invitation, invitee: 'a' });
   await expect(inviting.cancel({ invitation, invitee: 'a' })).rejects.toBeInstanceOf(InvitationUnavailable);
-  expect((await inviting._strikes({ invitee: 'a' })).strikes).toBe(1);
+  expect(JSON.parse((await inviting._mine({ invitee: 'a' })).invitations)[0]).toMatchObject({ status: 'CANCELLED', reason: 'YOU_CANCELLED', active: false });
 });
 test('one active invite and owner authorization are enforced in storage', async () => {
   const { invitation } = await inviting.invite(delivery());
@@ -24,24 +24,35 @@ test('one active invite and owner authorization are enforced in storage', async 
   await expect(inviting.accept({ invitation, invitee: 'a' })).rejects.toBeInstanceOf(InvitationUnavailable);
   await inviting.invite(delivery('a', 'another'));
 });
-test('deadline boundary refuses responses even before periodic expiry', async () => {
+test('expiry is lazy: at the deadline responses are refused, reads show EXPIRED, and the lock is released', async () => {
   const input = delivery(); const { invitation } = await inviting.invite(input);
   now = input.deadline;
   await expect(inviting.accept({ invitation, invitee: 'a' })).rejects.toBeInstanceOf(InvitationUnavailable);
   await expect(inviting.decline({ invitation, invitee: 'a' })).rejects.toBeInstanceOf(InvitationUnavailable);
-  expect(await inviting.expire({ invitation })).toEqual({ changed: true });
-  expect(await inviting.expire({ invitation })).toEqual({ changed: false });
-  expect((await inviting._strikes({ invitee: 'a' })).strikes).toBe(0);
+  // No periodic job ran, yet every read reports the overdue invitation as expired and inactive.
+  expect(JSON.parse((await inviting._mine({ invitee: 'a' })).invitations)[0]).toMatchObject({ status: 'EXPIRED', active: false });
+  expect((await inviting._all({})).find(r => r.invitation === invitation)).toMatchObject({ status: 'EXPIRED', active: false });
+  // The stale row must not block the next invitation through the one-active-invitation index.
+  await inviting.invite(delivery('a', 'another'));
+});
+test('closing a cancelled event keeps expired invitations distinct from event cancellations', async () => {
+  const input = delivery(); const { invitation } = await inviting.invite(input);
+  const { invitation: other } = await inviting.invite(delivery('b'));
+  await inviting.accept({ invitation: other, invitee: 'b' });
+  now = input.deadline;
+  await inviting.closeEvent({ event: 'event', cancelled: true });
+  const rows = await inviting._all({});
+  expect(rows.find(r => r.invitation === invitation)).toMatchObject({ status: 'EXPIRED', reason: '' });
+  expect(rows.find(r => r.invitation === other)).toMatchObject({ status: 'CANCELLED', reason: 'EVENT_CANCELLED' });
 });
 test('concurrent accept and decline cannot both win', async () => {
   const { invitation } = await inviting.invite(delivery());
   const results = await Promise.allSettled([inviting.accept({ invitation, invitee: 'a' }), inviting.decline({ invitation, invitee: 'a' })]);
   expect(results.filter(r => r.status === 'fulfilled')).toHaveLength(1);
 });
-test('event cancellation releases the active lock without a strike', async () => {
+test('event cancellation releases the active lock', async () => {
   const { invitation } = await inviting.invite(delivery());
   await inviting.accept({ invitation, invitee: 'a' });
   await inviting.closeEvent({ event: 'event', cancelled: true });
-  expect((await inviting._strikes({ invitee: 'a' })).strikes).toBe(0);
   await inviting.invite(delivery('a', 'another'));
 });

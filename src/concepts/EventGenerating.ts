@@ -6,7 +6,7 @@ import { localDay } from '../../shared/catalog.ts';
 type EventRow = { event: string; group: string; area: string; tag: string; start: number; end: number; capacity: number; venue: string; status: string; title: string; description: string; inviteBlurb: string; accepted: number };
 export class EventUnavailable extends Error {}
 export class EventGeneratingConcept {
-  private readonly state = new AtomicState<{ events: EventRow[] }>('event_generating', () => ({ events: [] }));
+  private readonly state = new AtomicState<{ events: EventRow[]; reviews?: { review: string; changes: { event: string; group: string; status: string }[] }[] }>('event_generating', () => ({ events: [], reviews: [] }));
   constructor(private readonly now: () => number = Date.now) {}
   async generate({ group, area, tag, start, end, size }: { group: string; area: string; tag: string; start: number; end: number; size: number }) {
     const previous = (await this.state.read()).events.find(e => e.group === group);
@@ -38,6 +38,23 @@ export class EventGeneratingConcept {
       return { event, group: e.group, status: e.status, locked: this.now() >= e.start - timing.cutoff };
     });
   }
+  /** Applies this concept's own time rules to every open event, using the last accepted count it was given:
+   * fewer than three accepted at the cutoff cancels; a finished event is done if confirmed, else cancelled. */
+  async reviewDue(_: Record<string, never>) {
+    return this.state.change(s => {
+      const review = crypto.randomUUID(), changes: { event: string; group: string; status: string }[] = [];
+      for (const e of s.events) {
+        if (['CANCELLED', 'DONE'].includes(e.status)) continue;
+        const before = e.status;
+        if (this.now() >= e.end) e.status = e.status === 'CONFIRMED' ? 'DONE' : 'CANCELLED';
+        else if (this.now() >= e.start - timing.cutoff && e.accepted < 3) e.status = 'CANCELLED';
+        if (e.status !== before) changes.push({ event: e.event, group: e.group, status: e.status });
+      }
+      s.reviews = [...(s.reviews ?? []), { review, changes }].slice(-50);
+      return { review };
+    });
+  }
+  async _reviewed({ review }: { review: string }) { return ((await this.state.read()).reviews ?? []).find(r => r.review === review)?.changes ?? []; }
   async cancel({ event }: { event: string }) {
     return this.state.change(s => { const e = s.events.find(e => e.event === event && e.start > this.now() && e.status !== 'DONE'); if (!e) throw new EventUnavailable('Only upcoming events can be cancelled.'); e.status = 'CANCELLED'; return { event, group: e.group }; });
   }

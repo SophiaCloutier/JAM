@@ -45,22 +45,6 @@ Defined in [Characterizing](../design/concepts/Characterizing.md), line 1.
 - `Characterizing` — instance of `Characterizing` — [JAM application types](../design/types.md), line 21.
   - `User` is `Person` — [JAM application types](../design/types.md), line 22.
 
-### Clock
-
-Defined in [Clock](../design/concepts/Clock.md), line 1.
-
-#### Actions
-
-- `tick() : returns (tick: Tick)`
-- `review() : returns (tick: Tick)`
-- `reconcile() : returns (tick: Tick)`
-- `recover() : returns (tick: Tick)`
-- `hourly() : returns (tick: Tick)`
-
-#### Instances
-
-- `Clock` — instance of `Clock` — [JAM application types](../design/types.md), line 28.
-
 ### EventGenerating
 
 Defined in [EventGenerating](../design/concepts/EventGenerating.md), line 1.
@@ -70,6 +54,7 @@ Defined in [EventGenerating](../design/concepts/EventGenerating.md), line 1.
 - `generate(group: Group, area: String, tag: String, start: Number, end: Number, size: Number) : returns (generated: Flag, group: Group, event: Event, start: Number, end: Number, capacity: Number, deadline: Number, details: String)`
 - `review(event: Event, count: Number) : returns (event: Event, group: Group, status: String, locked: Flag)`
   - Refuses `EVENT_UNAVAILABLE`: Check the action preconditions.
+- `reviewDue() : returns (review: Review)`
 - `cancel(event: Event) : returns (event: Event, group: Group)`
   - Refuses `EVENT_UNAVAILABLE`: Check the action preconditions.
 
@@ -80,11 +65,12 @@ Defined in [EventGenerating](../design/concepts/EventGenerating.md), line 1.
 - `_get(event: Event) : many (details: String)`
 - `_deliveries() : many (generated: Flag, group: Group, event: Event, start: Number, end: Number, capacity: Number, deadline: Number, details: String)`
 - `_admin() : one (events: String)`
+- `_reviewed(review: Review) : many (event: Event, group: Group, status: String)`
 
 #### Instances
 
 - `EventGenerating` — instance of `EventGenerating` — [JAM application types](../design/types.md), line 26.
-  - `Group` is `Matching.Group` — [JAM application types](../design/types.md), line 27.
+  - `Group` is `Matching.Cluster` — [JAM application types](../design/types.md), line 27.
 
 ### Inviting
 
@@ -103,17 +89,14 @@ Defined in [Inviting](../design/concepts/Inviting.md), line 1.
 - `cancel(invitation: Invitation, invitee: User) : returns (event: Event, request: Request)`
   - Refuses `INVITATION_FORBIDDEN`: invitee does not own invitation.
   - Refuses `INVITATION_UNAVAILABLE`: invitation is not accepted and active before start.
-- `expire(invitation: Invitation) : returns (changed: Flag)`
 - `closeEvent(event: Event, cancelled: Flag) : returns (event: Event)`
 
 #### Queries
 
-- `_mine(invitee: User) : one (invitations: String, strikes: Number)`
-- `_overdue() : many (invitation: Invitation)`
-- `_all() : many (invitation: Invitation, invitee: User, event: Event, request: Request, status: Status, deadline: Number, start: Number, end: Number, details: String, active: Flag, strike: Flag, reason: String)`
+- `_mine(invitee: User) : one (invitations: String)`
+- `_all() : many (invitation: Invitation, invitee: User, event: Event, request: Request, status: Status, deadline: Number, start: Number, end: Number, details: String, active: Flag, reason: String)`
 - `_count(event: Event) : one (count: Number)`
-- `_strikes(invitee: User) : one (strikes: Number)`
-- `_forUser(invitee: User) : many (invitation: Invitation, invitee: User, event: Event, request: Request, status: Status, deadline: Number, start: Number, end: Number, details: String, active: Flag, strike: Flag, reason: String)`
+- `_forUser(invitee: User) : many (invitation: Invitation, invitee: User, event: Event, request: Request, status: Status, deadline: Number, start: Number, end: Number, details: String, active: Flag, reason: String)`
 
 #### Instances
 
@@ -128,26 +111,28 @@ Defined in [Matching](../design/concepts/Matching.md), line 1.
 
 #### Actions
 
-- `submit(user: User, interests: String, start: Number, end: Number, areas: String, strikes: Number) : returns (request: Request)`
-  - Refuses `INVALID_SLOT`: Check the action preconditions.
-  - Refuses `SLOT_UNAVAILABLE`: Check the action preconditions.
+- `submit(user: User, date: String, start: Number, end: Number, selected: String, interests: String, location: String, radius: Number) : returns (request: Request)`
+  - Refuses `INVALID_SLOT`: Check the date, time window, interest and distance.
+  - Refuses `SLOT_UNAVAILABLE`: Choose a later date or wait for your open request.
 - `withdraw(user: User, request: Request) : returns (request: Request)`
-  - Refuses `INVALID_SLOT`: Check the action preconditions.
-  - Refuses `SLOT_UNAVAILABLE`: Check the action preconditions.
-- `fillOpenGroups() : returns (placed: Number)`
-- `formGroups(limits: String) : returns (formed: Number)`
-- `activate(group: Group, event: Event, capacity: Number) : returns (group: Group)`
-- `abandon(group: Group) : returns (group: Group)`
-- `close(group: Group) : returns (group: Group)`
+  - Refuses `SLOT_UNAVAILABLE`: Only a waiting request can be withdrawn.
+- `openDue(force: Flag) : returns (run: Run)`
+- `form(date: String, stage: String, candidates: String, minScore: Number, limits: String) : returns (date: String, stage: String)`
+- `assign(date: String, stage: String, candidates: String, limits: String) : returns (date: String, stage: String)`
+- `finish(date: String) : returns (date: String)`
+- `activate(cluster: Cluster, event: Event) : returns (cluster: Cluster)`
+- `abandon(cluster: Cluster) : returns (cluster: Cluster)`
+- `close(cluster: Cluster) : returns (cluster: Cluster)`
 - `reconcile(request: Request, status: String, active: Flag, reason: String) : returns (request: Request)`
-- `expireOpen() : returns (checked: Flag)`
 
 #### Queries
 
 - `_mine(user: User) : one (requests: String)`
-- `_drafts() : many (group: Group, area: String, tag: String, start: Number, end: Number, size: Number)`
-- `_members(group: Group) : many (invitee: User, request: Request)`
-- `_placements() : many (group: Group, event: Event)`
+- `_opened(run: Run) : many (date: String)`
+- `_chosen(date: String) : one (candidates: String)`
+- `_profile(date: String) : one (candidates: String)`
+- `_completed() : many (cluster: Cluster, area: String, tag: String, start: Number, end: Number, size: Number)`
+- `_members(cluster: Cluster) : many (invitee: User, request: Request)`
 
 #### Instances
 
@@ -190,7 +175,7 @@ _the authored explanation; this section records the generated shape._
 ### admin event list
 
 Authored path: `Meetups.AdminEvents`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 101.
+- Covered by [JAM application](../design/compositions/Application.md), line 90.
 
 ```former
 Former "admin event list" — inputs (); bindings (events); promises exactly one record — forms:
@@ -202,7 +187,7 @@ Former "admin event list" — inputs (); bindings (events); promises exactly one
 ### my event details
 
 Authored path: `Meetups.MyEvents`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 97.
+- Covered by [JAM application](../design/compositions/Application.md), line 89.
 
 ```former
 Former "my event details" — inputs (user); bindings (event, details); promises exactly one record — forms:
@@ -217,7 +202,7 @@ Former "my event details" — inputs (user); bindings (event, details); promises
 ### my interests
 
 Authored path: `Profiles.MyProfile`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 27.
+- Covered by [JAM application](../design/compositions/Application.md), line 19.
 
 ```former
 Former "my interests" — inputs (user); bindings (interests); promises exactly one record — forms:
@@ -229,23 +214,22 @@ Former "my interests" — inputs (user); bindings (interests); promises exactly 
 ### my invitations
 
 Authored path: `Invitations.MyInbox`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 17.
+- Covered by [JAM application](../design/compositions/Application.md), line 66.
 
 ```former
-Former "my invitations" — inputs (user); bindings (invitations, strikes); promises exactly one record — forms:
+Former "my invitations" — inputs (user); bindings (invitations); promises exactly one record — forms:
   a record of
-    where Inviting._mine (invitee: user) has (invitations, strikes)
+    where Inviting._mine (invitee: user) has (invitations)
     invitations
-    strikes
 ```
 
-### my slots
+### my requests
 
 Authored path: `Meetups.MyRequests`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 47.
+- Covered by [JAM application](../design/compositions/Application.md), line 33.
 
 ```former
-Former "my slots" — inputs (user); bindings (requests); promises exactly one record — forms:
+Former "my requests" — inputs (user); bindings (requests); promises exactly one record — forms:
   a record of
     where Matching._mine (user) has (requests)
     requests
@@ -276,8 +260,8 @@ then
 ### Invitations.Accept
 
 Authored path: `Invitations.Accept`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 12.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 18.
+- Covered by [JAM application](../design/compositions/Application.md), line 67.
+- Covered by [JAM application](../design/compositions/Application.md), line 73.
 
 ```reaction
 when RequestBoundary.request (invitation, path: "/invitations/accept", requestId, session)
@@ -288,8 +272,8 @@ then
 ### Invitations.Accept#2
 
 Authored path: `Invitations.Accept`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 12.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 18.
+- Covered by [JAM application](../design/compositions/Application.md), line 67.
+- Covered by [JAM application](../design/compositions/Application.md), line 73.
 
 ```reaction
 when Sessioning.current (session, user), asked by Invitations.Accept
@@ -302,8 +286,8 @@ then
 ### Invitations.Accept#3
 
 Authored path: `Invitations.Accept`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 12.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 18.
+- Covered by [JAM application](../design/compositions/Application.md), line 67.
+- Covered by [JAM application](../design/compositions/Application.md), line 73.
 
 ```reaction
 when Inviting.accept (invitation, invitee: user, event), asked by Invitations.Accept#2
@@ -316,8 +300,8 @@ then
 ### Invitations.Cancel
 
 Authored path: `Invitations.Cancel`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 14.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 18.
+- Covered by [JAM application](../design/compositions/Application.md), line 67.
+- Covered by [JAM application](../design/compositions/Application.md), line 75.
 
 ```reaction
 when RequestBoundary.request (invitation, path: "/invitations/cancel", requestId, session)
@@ -328,8 +312,8 @@ then
 ### Invitations.Cancel#2
 
 Authored path: `Invitations.Cancel`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 14.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 18.
+- Covered by [JAM application](../design/compositions/Application.md), line 67.
+- Covered by [JAM application](../design/compositions/Application.md), line 75.
 
 ```reaction
 when Sessioning.current (session, user), asked by Invitations.Cancel
@@ -342,8 +326,8 @@ then
 ### Invitations.Cancel#3
 
 Authored path: `Invitations.Cancel`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 14.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 18.
+- Covered by [JAM application](../design/compositions/Application.md), line 67.
+- Covered by [JAM application](../design/compositions/Application.md), line 75.
 
 ```reaction
 when Inviting.cancel (invitation, invitee: user, event), asked by Invitations.Cancel#2
@@ -356,8 +340,8 @@ then
 ### Invitations.Decline
 
 Authored path: `Invitations.Decline`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 13.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 18.
+- Covered by [JAM application](../design/compositions/Application.md), line 67.
+- Covered by [JAM application](../design/compositions/Application.md), line 74.
 
 ```reaction
 when RequestBoundary.request (invitation, path: "/invitations/decline", requestId, session)
@@ -368,8 +352,8 @@ then
 ### Invitations.Decline#2
 
 Authored path: `Invitations.Decline`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 13.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 18.
+- Covered by [JAM application](../design/compositions/Application.md), line 67.
+- Covered by [JAM application](../design/compositions/Application.md), line 74.
 
 ```reaction
 when Sessioning.current (session, user), asked by Invitations.Decline
@@ -382,8 +366,8 @@ then
 ### Invitations.Decline#3
 
 Authored path: `Invitations.Decline`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 13.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 18.
+- Covered by [JAM application](../design/compositions/Application.md), line 67.
+- Covered by [JAM application](../design/compositions/Application.md), line 74.
 
 ```reaction
 when Inviting.decline (invitation, invitee: user, event), asked by Invitations.Decline#2
@@ -393,24 +377,11 @@ then
   RequestBoundary.respond (event, requestId)
 ```
 
-### Invitations.ExpireOverdue
-
-Authored path: `Invitations.ExpireOverdue`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 20.
-
-```reaction
-when Clock.tick ()
-where
-  Inviting._overdue () has (invitation)
-then
-  Inviting.expire (invitation)
-```
-
 ### Invitations.Inbox
 
 Authored path: `Invitations.Inbox`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 11.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 17.
+- Covered by [JAM application](../design/compositions/Application.md), line 66.
+- Covered by [JAM application](../design/compositions/Application.md), line 72.
 
 ```reaction
 when RequestBoundary.request (path: "/invitations/mine", requestId, session)
@@ -421,8 +392,8 @@ then
 ### Invitations.Inbox#2
 
 Authored path: `Invitations.Inbox`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 11.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 17.
+- Covered by [JAM application](../design/compositions/Application.md), line 66.
+- Covered by [JAM application](../design/compositions/Application.md), line 72.
 
 ```reaction
 when Sessioning.current (session, user), asked by Invitations.Inbox
@@ -435,19 +406,19 @@ then
 ### Meetups.ActivateGroup
 
 Authored path: `Meetups.ActivateGroup`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 63.
+- Covered by [JAM application](../design/compositions/Application.md), line 62.
 
 ```reaction
-when EventGenerating.generate (group, capacity, event, generated: true)
+when EventGenerating.generate (group, event, generated: true)
 then
-  Matching.activate (capacity, event, group)
+  Matching.activate (cluster: group, event)
 ```
 
 ### Meetups.Admin
 
 Authored path: `Meetups.Admin`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 103.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 126.
+- Covered by [JAM application](../design/compositions/Application.md), line 90.
+- Covered by [JAM application](../design/compositions/Application.md), line 95.
 
 ```reaction
 when RequestBoundary.request (path: "/admin/events", requestId, session)
@@ -458,8 +429,8 @@ then
 ### Meetups.Admin#2
 
 Authored path: `Meetups.Admin`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 103.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 126.
+- Covered by [JAM application](../design/compositions/Application.md), line 90.
+- Covered by [JAM application](../design/compositions/Application.md), line 95.
 
 ```reaction
 when Sessioning.authorize (session, user), asked by Meetups.Admin
@@ -472,23 +443,36 @@ then
 ### Meetups.AdminCancelled
 
 Authored path: `Meetups.AdminCancelled`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 89.
+- Covered by [JAM application](../design/compositions/Application.md), line 91.
 
 ```reaction
 when EventGenerating.cancel (event, group)
 then
-  Matching.close (group)
+  Matching.close (cluster: group)
 ```
 
 ### Meetups.AdminCancelled#2
 
 Authored path: `Meetups.AdminCancelled`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 89.
+- Covered by [JAM application](../design/compositions/Application.md), line 91.
 
 ```reaction
-when Matching.close (group), asked by Meetups.AdminCancelled
+when Matching.close (cluster: group), asked by Meetups.AdminCancelled
 where
   earlier, EventGenerating.cancel (event, group)
+then
+  Inviting.closeEvent (cancelled: true, event)
+```
+
+### Meetups.CancelDue
+
+Authored path: `Meetups.CancelDue`.
+- Covered by [JAM application](../design/compositions/Application.md), line 84.
+
+```reaction
+when EventGenerating.reviewDue (review)
+where
+  EventGenerating._reviewed (review) has (event, status: "CANCELLED")
 then
   Inviting.closeEvent (cancelled: true, event)
 ```
@@ -496,8 +480,8 @@ then
 ### Meetups.CancelEvent
 
 Authored path: `Meetups.CancelEvent`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 107.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 134.
+- Covered by [JAM application](../design/compositions/Application.md), line 91.
+- Covered by [JAM application](../design/compositions/Application.md), line 97.
 
 ```reaction
 when RequestBoundary.request (event, path: "/admin/cancel", requestId, session)
@@ -508,8 +492,8 @@ then
 ### Meetups.CancelEvent#2
 
 Authored path: `Meetups.CancelEvent`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 107.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 134.
+- Covered by [JAM application](../design/compositions/Application.md), line 91.
+- Covered by [JAM application](../design/compositions/Application.md), line 97.
 
 ```reaction
 when Sessioning.authorize (session, user), asked by Meetups.CancelEvent
@@ -522,8 +506,8 @@ then
 ### Meetups.CancelEvent#3
 
 Authored path: `Meetups.CancelEvent`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 107.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 134.
+- Covered by [JAM application](../design/compositions/Application.md), line 91.
+- Covered by [JAM application](../design/compositions/Application.md), line 97.
 
 ```reaction
 when EventGenerating.cancel (event), asked by Meetups.CancelEvent#2
@@ -536,7 +520,7 @@ then
 ### Meetups.CancelInvitations
 
 Authored path: `Meetups.CancelInvitations`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 85.
+- Covered by [JAM application](../design/compositions/Application.md), line 81.
 
 ```reaction
 when EventGenerating.review (event, status: "CANCELLED")
@@ -547,18 +531,31 @@ then
 ### Meetups.CloseAtCutoff
 
 Authored path: `Meetups.CloseAtCutoff`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 83.
+- Covered by [JAM application](../design/compositions/Application.md), line 80.
 
 ```reaction
 when EventGenerating.review (group, locked: true)
 then
-  Matching.close (group)
+  Matching.close (cluster: group)
+```
+
+### Meetups.CloseReviewed
+
+Authored path: `Meetups.CloseReviewed`.
+- Covered by [JAM application](../design/compositions/Application.md), line 85.
+
+```reaction
+when EventGenerating.reviewDue (review)
+where
+  EventGenerating._reviewed (review) has (group)
+then
+  Matching.close (cluster: group)
 ```
 
 ### Meetups.Confirm
 
 Authored path: `Meetups.Confirm`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 75.
+- Covered by [JAM application](../design/compositions/Application.md), line 78.
 
 ```reaction
 when Inviting.accept (event)
@@ -568,25 +565,11 @@ then
   EventGenerating.review (count, event)
 ```
 
-### Meetups.DeliverBackfill
-
-Authored path: `Meetups.DeliverBackfill`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 69.
-
-```reaction
-when Matching.fillOpenGroups ()
-where
-  EventGenerating._deliveries () has (deadline, details, end, event, group, start)
-  Matching._members (group) has (invitee, request)
-then
-  Inviting.invite (deadline, details, end, event, invitee, request, start)
-```
-
 ### Meetups.Events
 
 Authored path: `Meetups.Events`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 99.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 122.
+- Covered by [JAM application](../design/compositions/Application.md), line 89.
+- Covered by [JAM application](../design/compositions/Application.md), line 94.
 
 ```reaction
 when RequestBoundary.request (path: "/events/mine", requestId, session)
@@ -597,8 +580,8 @@ then
 ### Meetups.Events#2
 
 Authored path: `Meetups.Events`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 99.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 122.
+- Covered by [JAM application](../design/compositions/Application.md), line 89.
+- Covered by [JAM application](../design/compositions/Application.md), line 94.
 
 ```reaction
 when Sessioning.current (session, user), asked by Meetups.Events
@@ -608,21 +591,34 @@ then
   RequestBoundary.respond (calendar: former "my event details" with (user), requestId)
 ```
 
-### Meetups.ExpireWaiting
+### Meetups.Finish
 
-Authored path: `Meetups.ExpireWaiting`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 95.
+Authored path: `Meetups.Finish`.
+- Covered by [JAM application](../design/compositions/Application.md), line 57.
 
 ```reaction
-when Clock.reconcile ()
+when Matching.assign (stage: "leftover", date)
 then
-  Matching.expireOpen ()
+  Matching.finish (date)
+```
+
+### Meetups.FinishDue
+
+Authored path: `Meetups.FinishDue`.
+- Covered by [JAM application](../design/compositions/Application.md), line 85.
+
+```reaction
+when EventGenerating.reviewDue (review)
+where
+  EventGenerating._reviewed (review) has (event, status: "DONE")
+then
+  Inviting.closeEvent (cancelled: false, event)
 ```
 
 ### Meetups.FinishInvitations
 
 Authored path: `Meetups.FinishInvitations`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 87.
+- Covered by [JAM application](../design/compositions/Application.md), line 81.
 
 ```reaction
 when EventGenerating.review (event, status: "DONE")
@@ -630,28 +626,44 @@ then
   Inviting.closeEvent (cancelled: false, event)
 ```
 
-### Meetups.FormGroups
+### Meetups.FormChosen
 
-Authored path: `Meetups.FormGroups`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 57.
+Authored path: `Meetups.FormChosen`.
+- Covered by [JAM application](../design/compositions/Application.md), line 49.
 
 ```reaction
-when Matching.fillOpenGroups ()
+when Matching.openDue (run)
 where
+  Matching._opened (run) has (date)
+  Matching._chosen (date) has (candidates)
   EventGenerating._limits () has (limits)
 then
-  Matching.formGroups (limits)
+  Matching.form (candidates, date, limits, minScore: 1, stage: "chosen")
+```
+
+### Meetups.FormProfile
+
+Authored path: `Meetups.FormProfile`.
+- Covered by [JAM application](../design/compositions/Application.md), line 55.
+
+```reaction
+when Matching.assign (stage: "profile", date)
+where
+  Matching._profile (date) has (candidates)
+  EventGenerating._limits () has (limits)
+then
+  Matching.form (candidates, date, limits, minScore: 0.7, stage: "profile")
 ```
 
 ### Meetups.GenerateForMatch
 
 Authored path: `Meetups.GenerateForMatch`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 59.
+- Covered by [JAM application](../design/compositions/Application.md), line 61.
 
 ```reaction
-when Matching.formGroups ()
+when Matching.finish ()
 where
-  Matching._drafts () has (area, end, group, size, start, tag)
+  Matching._completed () has (area, cluster: group, end, size, start, tag)
 then
   EventGenerating.generate (area, end, group, size, start, tag)
 ```
@@ -659,20 +671,62 @@ then
 ### Meetups.InviteParticipants
 
 Authored path: `Meetups.InviteParticipants`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 67.
+- Covered by [JAM application](../design/compositions/Application.md), line 63.
 
 ```reaction
 when EventGenerating.generate (group, deadline, details, end, event, generated: true, start)
 where
-  Matching._members (group) has (invitee, request)
+  Matching._members (cluster: group) has (invitee, request)
 then
   Inviting.invite (deadline, details, end, event, invitee, request, start)
+```
+
+### Meetups.JoinChosen
+
+Authored path: `Meetups.JoinChosen`.
+- Covered by [JAM application](../design/compositions/Application.md), line 51.
+
+```reaction
+when Matching.form (stage: "chosen", date)
+where
+  Matching._chosen (date) has (candidates)
+  EventGenerating._limits () has (limits)
+then
+  Matching.assign (candidates, date, limits, stage: "chosen")
+```
+
+### Meetups.JoinLeftovers
+
+Authored path: `Meetups.JoinLeftovers`.
+- Covered by [JAM application](../design/compositions/Application.md), line 56.
+
+```reaction
+when Matching.form (stage: "profile", date)
+where
+  Matching._profile (date) has (candidates)
+  EventGenerating._limits () has (limits)
+then
+  Matching.assign (candidates, date, limits, stage: "leftover")
+```
+
+### Meetups.JoinProfile
+
+Authored path: `Meetups.JoinProfile`.
+- Covered by [JAM application](../design/compositions/Application.md), line 53.
+
+```reaction
+when Matching.assign (stage: "chosen", date)
+where
+  Matching._profile (date) has (candidates)
+  EventGenerating._limits () has (limits)
+then
+  Matching.assign (candidates, date, limits, stage: "profile")
 ```
 
 ### Meetups.LateCancel
 
 Authored path: `Meetups.LateCancel`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 81.
+- Covered by [JAM application](../design/compositions/Application.md), line 80.
 
 ```reaction
 when Inviting.cancel (request)
@@ -683,8 +737,8 @@ then
 ### Meetups.Mine
 
 Authored path: `Meetups.Mine`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 49.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 110.
+- Covered by [JAM application](../design/compositions/Application.md), line 33.
+- Covered by [JAM application](../design/compositions/Application.md), line 37.
 
 ```reaction
 when RequestBoundary.request (path: "/requests/mine", requestId, session)
@@ -695,21 +749,21 @@ then
 ### Meetups.Mine#2
 
 Authored path: `Meetups.Mine`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 49.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 110.
+- Covered by [JAM application](../design/compositions/Application.md), line 33.
+- Covered by [JAM application](../design/compositions/Application.md), line 37.
 
 ```reaction
 when Sessioning.current (session, user), asked by Meetups.Mine
 where
   earlier, RequestBoundary.request (path: "/requests/mine", requestId, session)
 then
-  RequestBoundary.respond (pool: former "my slots" with (user), requestId)
+  RequestBoundary.respond (pool: former "my requests" with (user), requestId)
 ```
 
 ### Meetups.ReconcileClosedEvent
 
 Authored path: `Meetups.ReconcileClosedEvent`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 93.
+- Covered by [JAM application](../design/compositions/Application.md), line 86.
 
 ```reaction
 when Inviting.closeEvent (event)
@@ -719,23 +773,10 @@ then
   Matching.reconcile (active, reason, request, status)
 ```
 
-### Meetups.ReconcileDecisions
-
-Authored path: `Meetups.ReconcileDecisions`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 91.
-
-```reaction
-when Clock.reconcile ()
-where
-  Inviting._all () has (active, reason, request, status)
-then
-  Matching.reconcile (active, reason, request, status)
-```
-
 ### Meetups.ReconsiderCancellation
 
 Authored path: `Meetups.ReconsiderCancellation`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 77.
+- Covered by [JAM application](../design/compositions/Application.md), line 79.
 
 ```reaction
 when Inviting.cancel (event)
@@ -748,13 +789,13 @@ then
 ### Meetups.RecoverDeliveries
 
 Authored path: `Meetups.RecoverDeliveries`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 71.
+- Covered by [JAM application](../design/compositions/Application.md), line 63.
 
 ```reaction
-when Clock.recover ()
+when Matching.openDue ()
 where
   EventGenerating._deliveries () has (deadline, details, end, event, group, start)
-  Matching._members (group) has (invitee, request)
+  Matching._members (cluster: group) has (invitee, request)
 then
   Inviting.invite (deadline, details, end, event, invitee, request, start)
 ```
@@ -762,12 +803,12 @@ then
 ### Meetups.RecoverDrafts
 
 Authored path: `Meetups.RecoverDrafts`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 61.
+- Covered by [JAM application](../design/compositions/Application.md), line 61.
 
 ```reaction
-when Clock.recover ()
+when Matching.openDue ()
 where
-  Matching._drafts () has (area, end, group, size, start, tag)
+  Matching._completed () has (area, cluster: group, end, size, start, tag)
 then
   EventGenerating.generate (area, end, group, size, start, tag)
 ```
@@ -775,33 +816,19 @@ then
 ### Meetups.ReleaseFailedGroup
 
 Authored path: `Meetups.ReleaseFailedGroup`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 65.
+- Covered by [JAM application](../design/compositions/Application.md), line 64.
 
 ```reaction
 when EventGenerating.generate (group, generated: false)
 then
-  Matching.abandon (group)
-```
-
-### Meetups.ReviewEvents
-
-Authored path: `Meetups.ReviewEvents`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 73.
-
-```reaction
-when Clock.review ()
-where
-  EventGenerating._all () has (event)
-  Inviting._count (event) has (count)
-then
-  EventGenerating.review (count, event)
+  Matching.abandon (cluster: group)
 ```
 
 ### Meetups.Run
 
 Authored path: `Meetups.Run`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 105.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 130.
+- Covered by [JAM application](../design/compositions/Application.md), line 45.
+- Covered by [JAM application](../design/compositions/Application.md), line 96.
 
 ```reaction
 when RequestBoundary.request (path: "/admin/run", requestId, session)
@@ -812,33 +839,33 @@ then
 ### Meetups.Run#2
 
 Authored path: `Meetups.Run`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 105.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 130.
+- Covered by [JAM application](../design/compositions/Application.md), line 45.
+- Covered by [JAM application](../design/compositions/Application.md), line 96.
 
 ```reaction
 when Sessioning.authorize (session, user), asked by Meetups.Run
 then
-  Clock.hourly ()
+  Matching.openDue (force: true)
 ```
 
 ### Meetups.Run#3
 
 Authored path: `Meetups.Run`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 105.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 130.
+- Covered by [JAM application](../design/compositions/Application.md), line 45.
+- Covered by [JAM application](../design/compositions/Application.md), line 96.
 
 ```reaction
-when Clock.hourly (tick), asked by Meetups.Run#2
+when Matching.openDue (force: true, run), asked by Meetups.Run#2
 where
   earlier, RequestBoundary.request (path: "/admin/run", requestId, session)
 then
-  RequestBoundary.respond (requestId, tick)
+  RequestBoundary.respond (requestId, run)
 ```
 
 ### Meetups.SayNo
 
 Authored path: `Meetups.SayNo`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 79.
+- Covered by [JAM application](../design/compositions/Application.md), line 79.
 
 ```reaction
 when Inviting.decline (request)
@@ -846,25 +873,14 @@ then
   Matching.reconcile (active: false, reason: "", request, status: "DECLINED")
 ```
 
-### Meetups.StartMatching
-
-Authored path: `Meetups.StartMatching`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 55.
-
-```reaction
-when Clock.hourly ()
-then
-  Matching.fillOpenGroups ()
-```
-
 ### Meetups.Submit
 
 Authored path: `Meetups.Submit`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 51.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 114.
+- Covered by [JAM application](../design/compositions/Application.md), line 30.
+- Covered by [JAM application](../design/compositions/Application.md), line 38.
 
 ```reaction
-when RequestBoundary.request (areas, end, path: "/requests/submit", requestId, session, start)
+when RequestBoundary.request (date, end, location, path: "/requests/submit", radius, requestId, selected, session, start)
 then
   Sessioning.current (session)
 ```
@@ -872,29 +888,28 @@ then
 ### Meetups.Submit#2
 
 Authored path: `Meetups.Submit`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 51.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 114.
+- Covered by [JAM application](../design/compositions/Application.md), line 30.
+- Covered by [JAM application](../design/compositions/Application.md), line 38.
 
 ```reaction
 when Sessioning.current (session, user), asked by Meetups.Submit
 where
   Characterizing._get (user) has (interests)
-  Inviting._strikes (invitee: user) has (strikes)
-  earlier, RequestBoundary.request (areas, end, path: "/requests/submit", requestId, session, start)
+  earlier, RequestBoundary.request (date, end, location, path: "/requests/submit", radius, requestId, selected, session, start)
 then
-  Matching.submit (areas, end, interests, start, strikes, user)
+  Matching.submit (date, end, interests, location, radius, selected, start, user)
 ```
 
 ### Meetups.Submit#3
 
 Authored path: `Meetups.Submit`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 51.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 114.
+- Covered by [JAM application](../design/compositions/Application.md), line 30.
+- Covered by [JAM application](../design/compositions/Application.md), line 38.
 
 ```reaction
-when Matching.submit (areas, end, interests, start, strikes, user, request), asked by Meetups.Submit#2
+when Matching.submit (date, end, interests, location, radius, selected, start, user, request), asked by Meetups.Submit#2
 where
-  earlier, RequestBoundary.request (areas, end, path: "/requests/submit", requestId, session, start)
+  earlier, RequestBoundary.request (date, end, location, path: "/requests/submit", radius, requestId, selected, session, start)
 then
   RequestBoundary.respond (request, requestId)
 ```
@@ -902,8 +917,8 @@ then
 ### Meetups.Withdraw
 
 Authored path: `Meetups.Withdraw`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 53.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 118.
+- Covered by [JAM application](../design/compositions/Application.md), line 33.
+- Covered by [JAM application](../design/compositions/Application.md), line 39.
 
 ```reaction
 when RequestBoundary.request (path: "/requests/withdraw", request, requestId, session)
@@ -914,8 +929,8 @@ then
 ### Meetups.Withdraw#2
 
 Authored path: `Meetups.Withdraw`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 53.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 118.
+- Covered by [JAM application](../design/compositions/Application.md), line 33.
+- Covered by [JAM application](../design/compositions/Application.md), line 39.
 
 ```reaction
 when Sessioning.current (session, user), asked by Meetups.Withdraw
@@ -928,8 +943,8 @@ then
 ### Meetups.Withdraw#3
 
 Authored path: `Meetups.Withdraw`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 53.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 118.
+- Covered by [JAM application](../design/compositions/Application.md), line 33.
+- Covered by [JAM application](../design/compositions/Application.md), line 39.
 
 ```reaction
 when Matching.withdraw (request, user), asked by Meetups.Withdraw#2
@@ -942,8 +957,8 @@ then
 ### Profiles.AddInterest
 
 Authored path: `Profiles.AddInterest`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 31.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 40.
+- Covered by [JAM application](../design/compositions/Application.md), line 20.
+- Covered by [JAM application](../design/compositions/Application.md), line 24.
 
 ```reaction
 when RequestBoundary.request (path: "/profile/addInterest", requestId, session, tag)
@@ -954,8 +969,8 @@ then
 ### Profiles.AddInterest#2
 
 Authored path: `Profiles.AddInterest`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 31.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 40.
+- Covered by [JAM application](../design/compositions/Application.md), line 20.
+- Covered by [JAM application](../design/compositions/Application.md), line 24.
 
 ```reaction
 when Sessioning.current (session, user), asked by Profiles.AddInterest
@@ -968,8 +983,8 @@ then
 ### Profiles.AddInterest#3
 
 Authored path: `Profiles.AddInterest`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 31.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 40.
+- Covered by [JAM application](../design/compositions/Application.md), line 20.
+- Covered by [JAM application](../design/compositions/Application.md), line 24.
 
 ```reaction
 when Characterizing.addInterest (tag, user, result.tag: normalized), asked by Profiles.AddInterest#2
@@ -982,7 +997,7 @@ then
 ### Profiles.CreateProfile
 
 Authored path: `Profiles.CreateProfile`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 25.
+- Covered by [JAM application](../design/compositions/Application.md), line 18.
 
 ```reaction
 when Authenticating.register (user)
@@ -993,8 +1008,8 @@ then
 ### Profiles.Profile
 
 Authored path: `Profiles.Profile`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 29.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 36.
+- Covered by [JAM application](../design/compositions/Application.md), line 18.
+- Covered by [JAM application](../design/compositions/Application.md), line 23.
 
 ```reaction
 when RequestBoundary.request (path: "/profile/mine", requestId, session)
@@ -1005,8 +1020,8 @@ then
 ### Profiles.Profile#2
 
 Authored path: `Profiles.Profile`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 29.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 36.
+- Covered by [JAM application](../design/compositions/Application.md), line 18.
+- Covered by [JAM application](../design/compositions/Application.md), line 23.
 
 ```reaction
 when Sessioning.current (session, user), asked by Profiles.Profile
@@ -1019,8 +1034,8 @@ then
 ### Profiles.RemoveInterest
 
 Authored path: `Profiles.RemoveInterest`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 33.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 44.
+- Covered by [JAM application](../design/compositions/Application.md), line 20.
+- Covered by [JAM application](../design/compositions/Application.md), line 25.
 
 ```reaction
 when RequestBoundary.request (path: "/profile/removeInterest", requestId, session, tag)
@@ -1031,8 +1046,8 @@ then
 ### Profiles.RemoveInterest#2
 
 Authored path: `Profiles.RemoveInterest`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 33.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 44.
+- Covered by [JAM application](../design/compositions/Application.md), line 20.
+- Covered by [JAM application](../design/compositions/Application.md), line 25.
 
 ```reaction
 when Sessioning.current (session, user), asked by Profiles.RemoveInterest
@@ -1045,8 +1060,8 @@ then
 ### Profiles.RemoveInterest#3
 
 Authored path: `Profiles.RemoveInterest`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 33.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 44.
+- Covered by [JAM application](../design/compositions/Application.md), line 20.
+- Covered by [JAM application](../design/compositions/Application.md), line 25.
 
 ```reaction
 when Characterizing.removeInterest (tag, user), asked by Profiles.RemoveInterest#2
@@ -1059,8 +1074,8 @@ then
 ### Sessions.Current
 
 Authored path: `Sessions.Current`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 4.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 9.
+- Covered by [JAM application](../design/compositions/Application.md), line 6.
+- Covered by [JAM application](../design/compositions/Application.md), line 12.
 
 ```reaction
 when RequestBoundary.request (path: "/auth/current", requestId, session)
@@ -1071,8 +1086,8 @@ then
 ### Sessions.Current#2
 
 Authored path: `Sessions.Current`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 4.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 9.
+- Covered by [JAM application](../design/compositions/Application.md), line 6.
+- Covered by [JAM application](../design/compositions/Application.md), line 12.
 
 ```reaction
 when Sessioning.current (session, user), asked by Sessions.Current
@@ -1085,8 +1100,8 @@ then
 ### Sessions.Login
 
 Authored path: `Sessions.Login`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 3.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 8.
+- Covered by [JAM application](../design/compositions/Application.md), line 5.
+- Covered by [JAM application](../design/compositions/Application.md), line 11.
 
 ```reaction
 when RequestBoundary.request (email, password, path: "/auth/login", requestId)
@@ -1097,8 +1112,8 @@ then
 ### Sessions.Login#2
 
 Authored path: `Sessions.Login`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 3.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 8.
+- Covered by [JAM application](../design/compositions/Application.md), line 5.
+- Covered by [JAM application](../design/compositions/Application.md), line 11.
 
 ```reaction
 when Authenticating.login (email, password, user), asked by Sessions.Login
@@ -1109,8 +1124,8 @@ then
 ### Sessions.Login#3
 
 Authored path: `Sessions.Login`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 3.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 8.
+- Covered by [JAM application](../design/compositions/Application.md), line 5.
+- Covered by [JAM application](../design/compositions/Application.md), line 11.
 
 ```reaction
 when Sessioning.start (subject: user, expiresAt, session), asked by Sessions.Login#2
@@ -1123,8 +1138,8 @@ then
 ### Sessions.Logout
 
 Authored path: `Sessions.Logout`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 4.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 10.
+- Covered by [JAM application](../design/compositions/Application.md), line 6.
+- Covered by [JAM application](../design/compositions/Application.md), line 13.
 
 ```reaction
 when RequestBoundary.request (path: "/auth/logout", requestId, session)
@@ -1135,8 +1150,8 @@ then
 ### Sessions.Logout#2
 
 Authored path: `Sessions.Logout`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 4.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 10.
+- Covered by [JAM application](../design/compositions/Application.md), line 6.
+- Covered by [JAM application](../design/compositions/Application.md), line 13.
 
 ```reaction
 when Sessioning.end (session, ended), asked by Sessions.Logout
@@ -1149,8 +1164,8 @@ then
 ### Sessions.Register
 
 Authored path: `Sessions.Register`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 3.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 7.
+- Covered by [JAM application](../design/compositions/Application.md), line 5.
+- Covered by [JAM application](../design/compositions/Application.md), line 10.
 
 ```reaction
 when RequestBoundary.request (email, password, path: "/auth/register", requestId)
@@ -1161,8 +1176,8 @@ then
 ### Sessions.Register#2
 
 Authored path: `Sessions.Register`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 3.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 7.
+- Covered by [JAM application](../design/compositions/Application.md), line 5.
+- Covered by [JAM application](../design/compositions/Application.md), line 10.
 
 ```reaction
 when Authenticating.register (email, password, user), asked by Sessions.Register
@@ -1173,8 +1188,8 @@ then
 ### Sessions.Register#3
 
 Authored path: `Sessions.Register`.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 3.
-- Covered by [JAM invitations](../design/compositions/Application.md), line 7.
+- Covered by [JAM application](../design/compositions/Application.md), line 5.
+- Covered by [JAM application](../design/compositions/Application.md), line 10.
 
 ```reaction
 when Sessioning.start (subject: user, expiresAt, session), asked by Sessions.Register#2
@@ -1207,5 +1222,5 @@ not listed here have no explicit input contract.
 - `/profile/mine` — requires `session`
 - `/profile/removeInterest` — requires `session`, `tag`
 - `/requests/mine` — requires `session`
-- `/requests/submit` — requires `session`, `start`, `end`, `areas`
+- `/requests/submit` — requires `session`, `date`, `start`, `end`, `selected`, `location`, `radius`
 - `/requests/withdraw` — requires `session`, `request`

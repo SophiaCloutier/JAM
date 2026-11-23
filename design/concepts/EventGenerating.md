@@ -12,6 +12,9 @@ external Group
 a set of Events with
   a group Group
   a status String
+  an accepted Number
+a set of Reviews with
+  a changes String
 ```
 ## Actions
 ```actions
@@ -28,6 +31,11 @@ review(event: Event, count: Number) : returns (event: Event, group: Group, statu
   where an action precondition fails
   then
     refuses EVENT_UNAVAILABLE "Check the action preconditions."
+reviewDue() : returns (review: Review)
+  where preconditions hold
+  then
+    using stored accepted counts, cancel open events past cutoff with fewer than three accepted and finish ended events, recording the changes under a new review
+    returns review
 cancel(event: Event) : returns (event: Event, group: Group)
   where action preconditions hold
   then
@@ -49,4 +57,6 @@ _deliveries() : many (generated: Flag, group: Group, event: Event, start: Number
   Read the owned state without changing it.
 _admin() : one (events: String)
   Read the owned state without changing it.
+_reviewed(review: Review) : many (event: Event, group: Group, status: String)
+  Read the events whose status a review changed.
 ```

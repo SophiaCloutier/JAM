@@ -45,19 +45,19 @@ MongoDB must be running for tests. Tests create and delete uniquely named test d
 
 - `.env`: insert your MongoDB URI/database and the browser's exact `PUBLIC_ORIGIN`. No secrets are required for the local demo.
 - [Inviting](src/concepts/Inviting.ts): `invite` takes opaque user/event/request identities, epoch-millisecond timestamps, and a JSON display snapshot. No public API can create arbitrary invitations.
-- [Invitations composition](src/compositions/Invitations.ts): cookie authentication, inbox, and responses run through the actual sync engine. Clock-driven expiry runs at startup and every five minutes.
-- Teammates should supply event deliveries via syncs and handle decision outputs in syncs. `closeEvent` releases invitations without adding strikes on event cancellation or completion.
+- [Invitations composition](src/compositions/Invitations.ts): cookie authentication, inbox, and responses run through the actual sync engine. Expiry is owned by Inviting: an unanswered invitation past its deadline reads as expired, with no periodic job.
+- Teammates should supply event deliveries via syncs and handle decision outputs in syncs. `closeEvent` releases invitations on event cancellation or completion.
 - [Current concept contracts](design/concepts/) and [decisions](docs/DECISIONS.md) supersede the older F3 behavior where invitation answers could change freely.
 
 ## Scope and handoff
 
-The `.edu` suffix is checked, but mailbox ownership is **not verified**. The full branch includes interest profiles, availability, deterministic matching, venue capacity, backfill, confirmation, cancellation, completion, and clock-driven recovery. Run one server process.
+The `.edu` suffix is checked, but mailbox ownership is **not verified**. The full branch includes interest profiles, date requests with a free-time window and travel distance, a once-per-date deterministic matching run, venue capacity, confirmation, cancellation and completion. There is no clock concept: the host calls `Matching.openDue` and `EventGenerating.reviewDue` at startup and every five minutes. Run one server process.
 
 The F4 documents additionally call for deployment, a narrated recording, and submission. Those are outstanding team deliverables; no URL, recording, or submission is claimed here. See [validation](docs/VALIDATION.md).
 
 ## Full MVP setup
 
-Set `ADMIN_EMAILS` in `.env` to your registered email to see matching controls. Create at least three accounts, choose a shared interest, and submit overlapping same-day slots at least 24 hours ahead. Run matching as the administrator; sign into each account and accept. The third acceptance confirms the event. Automatic matching runs hourly while the server is running.
+Set `ADMIN_EMAILS` in `.env` to your registered email to see matching controls. Create at least three accounts, choose a shared interest, and request the same date at least two calendar days ahead with overlapping free time and a shared meeting area. Run matching as the administrator (it treats dates up to the earliest requestable date as due); sign into each account and accept. The third acceptance confirms the event. Automatically, each date is matched once, from the day before it, while the server is running.
 
 `src/venues.ts` contains suggested alpha locations and capacities: replace them with approved, precise meetup locations before a real pilot. They are not reservations. Optional `OPENAI_API_KEY` and `OPENAI_MODEL` enable event copy through the [Chat Completions API](https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create); leave them blank for tested template copy. Matching does not use the LLM.
 

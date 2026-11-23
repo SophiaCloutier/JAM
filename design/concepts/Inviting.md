@@ -2,7 +2,7 @@
 ## Purpose
 Get a firm response to a time-limited invitation.
 ## Principle
-Invite once per person and event. A person accepts or declines before the deadline; silence expires. Only an accepted invitation before start can be cancelled by its owner, recording exactly one strike. Event cancellation never adds a strike.
+Invite once per person and event. A person accepts or declines before the deadline; silence expires. Only an accepted invitation before start can be cancelled by its owner. Closing a cancelled event cancels its accepted invitations.
 ## Types
 ```types
 external User
@@ -22,9 +22,8 @@ a set of Invitations with
   an end Number
   a details String
   an active Flag
-  a strike Flag
   a reason String
-Rule: At most one active invitation per user and one invitation per user and event. Strikes are the count of invitations cancelled by their owner.
+Rule: At most one active invitation per user and one invitation per user and event. A pending invitation at or past its deadline is expired: reads report it as EXPIRED and inactive, and the next invite to that user or closeEvent for that event persists it.
 ```
 ## Actions
 ```actions
@@ -34,7 +33,7 @@ invite(invitee: User, event: Event, request: Request, start: Number, end: Number
     refuses INVITATION_UNAVAILABLE "time window is invalid or user has another active invitation."
   where preconditions hold
   then
-    reuse an existing delivery or create pending invitation with deadline capped at six hours
+    reuse an existing delivery, or expire the invitee's overdue pending invitations and create a pending invitation with deadline capped at six hours
     returns invitation
 accept(invitation: Invitation, invitee: User) : returns (event: Event, request: Request)
   where invitee does not own invitation
@@ -67,32 +66,23 @@ cancel(invitation: Invitation, invitee: User) : returns (event: Event, request: 
     refuses INVITATION_UNAVAILABLE "invitation is not accepted and active before start."
   where preconditions hold
   then
-    atomically change accepted to cancelled and inactive and record strike
+    atomically change accepted to cancelled and inactive
     returns event, request
-expire(invitation: Invitation) : returns (changed: Flag)
-  where preconditions hold
-  then
-    expire only pending invitations whose deadline passed, returning whether changed
-    returns changed
 closeEvent(event: Event, cancelled: Flag) : returns (event: Event)
   where preconditions hold
   then
-    deactivate event invitations; if cancelled mark active invitations cancelled without strikes
+    expire overdue pending invitations, then deactivate event invitations; if cancelled mark active invitations cancelled
     returns event
 ```
 ## Queries
 ```queries
-_mine(invitee: User) : one (invitations: String, strikes: Number)
-  Return JSON invitation history and strike count for this user.
-_overdue() : many (invitation: Invitation)
-  Return pending invitations at or past deadline.
-_all() : many (invitation: Invitation, invitee: User, event: Event, request: Request, status: Status, deadline: Number, start: Number, end: Number, details: String, active: Flag, strike: Flag, reason: String)
+_mine(invitee: User) : one (invitations: String)
+  Return JSON invitation history for this user.
+_all() : many (invitation: Invitation, invitee: User, event: Event, request: Request, status: Status, deadline: Number, start: Number, end: Number, details: String, active: Flag, reason: String)
   Return invitation records for internal reconciliation.
 _count(event: Event) : one (count: Number)
   Count active accepted invitations.
-_strikes(invitee: User) : one (strikes: Number)
-  Count owner-cancelled invitations.
-_forUser(invitee: User) : many (invitation: Invitation, invitee: User, event: Event, request: Request, status: Status, deadline: Number, start: Number, end: Number, details: String, active: Flag, strike: Flag, reason: String)
+_forUser(invitee: User) : many (invitation: Invitation, invitee: User, event: Event, request: Request, status: Status, deadline: Number, start: Number, end: Number, details: String, active: Flag, reason: String)
   Read invitations owned by this user.
 ```
 

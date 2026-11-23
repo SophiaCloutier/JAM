@@ -19,3 +19,30 @@ Increment 2: added independent Characterizing, Matching and EventGenerating conc
 Backfill closes early enough to preserve the full six-hour response window before the eight-hour cutoff. Accepted requests from cancelled events reopen with priority only if their remaining availability can still fit that window and a two-hour event. Otherwise they close and the user posts a new slot. Pending invitations to cancelled events expire without strikes. These timing refinements avoid immediately requeueing users into impossible events.
 
 Full-journey verification passed: three HTTP-registered users add interests, post slots, trigger matching, receive engine-generated invitations, accept, and see a confirmed event (21 assertions). Optional paid LLM copy, public deployment, and full lifecycle browser validation have not been exercised.
+
+## Increment 3: date-based matching, option logic in reactions, no Clock concept
+
+Prompted by the team's updated Matching / EventGenerating / Inviting concept document. Changes and reasons:
+
+- **Requests are for a date, at least two calendar days ahead.** The rule compares Boston calendar dates only, so a request on Thursday at any time may name Saturday at any time. The constant lives in `shared/catalog.ts` (`leadDays`) so the form's client-side check and the server rule cannot drift. `LEAD_HOURS` was removed.
+- **Matching runs once per date.** `Matching.openDue` treats date D as due from the start of D-1, after submissions for D closed at the end of D-2, and records each opened date so repeated calls and restarts never re-match it. A request for an already-matched date is refused. Dates missed entirely during downtime are marked `TOO_LATE`.
+- **Matching knows only similarity and availability; reactions choose the option.** Matching's `form` and `assign` take candidate interests per request and never read whether the user chose one. The Meetups reactions chain: exact clusters from chosen interests (score 1.0) → join on chosen interests (1.0, then 0.7, then smaller cluster) → join on profile interests (option 1's fallback, option 2's first step) → form clusters from profile interests (≥0.7) → join leftovers → finish. Each step handles a whole date in one action so the chain order is deterministic. The chosen interest and profile snapshot are stored with the request only so the queries can hand them back to reactions.
+- **Similarity is the predefined table**: same tag 1.0, same category 0.7, otherwise 0, minimum 0.7. `pottery` was added (category ceramics) so the doc's examples are expressible.
+- **Hard constraints**: a cluster keeps the intersection of its members' free-time windows (at least the event length), the intersection of their reachable meeting areas, and the largest venue capacity among those areas. Clusters are only created with three or more members, so there are no partial clusters to manage.
+- **Location is an anchor and a travel distance** (1/3/5/10 mi) from a fixed list of Boston-area places. Reachable meeting areas are the existing venue areas (Campus, Cambridge, Boston) within that distance, so EventGenerating did not need to change how it picks venues.
+- **No backfill or requeue.** Leftovers become unmatched (`NO_MATCH`); a failed generation makes members unmatched (`NO_VENUE`); a cancelled event makes requests unmatched (`EVENT_CANCELLED`). Declines, expiries and attendance close the request. The Plan page explains the reason and reopens the form with the previous interest pre-filled; the user may keep or change the interest but must pick a still-open date, because the matched date's run has already happened.
+- **Clock concept removed.** Clock only produced identifiers for reactions to hang work on. Each concept now owns its own time rules: Inviting expires lazily (reads report an overdue pending invitation as EXPIRED; `invite` and `closeEvent` persist it, so the one-active-invitation index never blocks a new invitation), and EventGenerating's `reviewDue` cancels events short of three acceptances at the cutoff and finishes ended events from its own stored counts. The host calls `Matching.openDue` then `EventGenerating.reviewDue` at startup and every five minutes; the admin Run endpoint calls `openDue` with `force` for demos. Sessioning stays: it resolves the signed-in user, not time.
+- **Strikes removed for now** from Inviting, the inbox and matching priority (see future considerations). Owner cancellation after accepting still exists and releases the place.
+- `Application.md` was rewritten to describe each reaction instead of placeholder text, and the generated contract was regenerated.
+
+Review notes: the implementation was agent-generated in this increment and reviewed step by step by Rachel during the session (lead-time semantics, removal of the `LEAD_DAYS` setting, sync-engine conformance of lazy expiry, scope of Clock/Sessioning). See `VALIDATION.md` for exactly what was and was not run.
+
+### Future considerations
+
+- **Strikes**: reintroduce cancellation strikes (and whether they affect matching order) once the core matching flow is validated with users.
+- **Inviting deadline**: the team wants 24 hours to respond after the invitation arrives; it is still six hours. With matching at the start of D-1, a 24-hour window ends early on D, before events.
+- **CANCELLED meaning**: the team wants CANCELLED to mean only "event cancelled" (fewer than three or no venue). Owner cancellation after accepting currently also records CANCELLED with reason `YOU_CANCELLED`.
+- **EventGenerating**: accept every reachable area instead of one, and choose a start time inside the cluster's window rather than the window's start.
+- **Expired invitations** only reach Matching when the event closes, so a user who ignored an invitation cannot submit a new request until then.
+- **Notifications** are in-app only (request status and reason); no email.
+- **Endpoint fallbacks**: the sync-engine check reports `MISSING_ENDPOINT_FALLBACK` advisories for every endpoint (present before this increment).

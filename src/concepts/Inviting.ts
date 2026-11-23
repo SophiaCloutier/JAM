@@ -6,7 +6,7 @@ export type InvitationStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'EXPIRED' |
 interface InvitationRow {
   invitation: string; invitee: string; event: string; request: string;
   status: InvitationStatus; deadline: number; start: number; end: number;
-  details: string; active: boolean; strike: boolean; reason: string;
+  details: string; active: boolean; reason: string;
 }
 
 /** Owns invitation decisions. Event and request are opaque external identifiers. */
@@ -23,10 +23,12 @@ export class InvitingConcept {
     // Idempotent delivery is essential when the scheduler reconciles after restart.
     const previous = await this.rows.findOne({ invitee, event });
     if (previous) return { invitation: previous.invitation };
+    // Expiry is lazy: an unanswered invitation past its deadline stops holding the active lock here.
+    await this.#expireOverdue({ invitee });
     const invitation = crypto.randomUUID();
     try { await this.rows.insertOne({ invitation, invitee, event, request, start, end,
       deadline: Math.min(deadline, this.now() + 6 * 3600000), details,
-      status: 'PENDING', active: true, strike: false, reason: '' }); }
+      status: 'PENDING', active: true, reason: '' }); }
     catch (e) { if (e instanceof MongoServerError && e.code === 11000) throw new InvitationUnavailable('You already have an active invitation.'); throw e; }
     return { invitation };
   }
@@ -52,16 +54,12 @@ export class InvitingConcept {
   async cancel({ invitation, invitee }: { invitation: string; invitee: string }) {
     await this.#owned(invitation, invitee);
     const row = await this.rows.findOneAndUpdate({ invitation, invitee, status: 'ACCEPTED', active: true, start: { $gt: this.now() } },
-      { $set: { status: 'CANCELLED', active: false, strike: true, reason: 'YOU_CANCELLED' } }, { returnDocument: 'after' });
+      { $set: { status: 'CANCELLED', active: false, reason: 'YOU_CANCELLED' } }, { returnDocument: 'after' });
     if (!row) throw new InvitationUnavailable('Only an accepted invitation before the event can be cancelled.');
     return { event: row.event, request: row.request };
   }
-  async expire({ invitation }: { invitation: string }) {
-    const row = await this.rows.findOneAndUpdate({ invitation, status: 'PENDING', deadline: { $lte: this.now() } },
-      { $set: { status: 'EXPIRED', active: false } }, { returnDocument: 'after' });
-    return { changed: !!row };
-  }
   async closeEvent({ event, cancelled }: { event: string; cancelled: boolean }) {
+    await this.#expireOverdue({ event });
     if (cancelled) {
       await this.rows.updateMany({ event, active: true, status: 'PENDING' }, { $set: { status: 'EXPIRED', active: false, reason: 'EVENT_CANCELLED' } });
       await this.rows.updateMany({ event, active: true, status: 'ACCEPTED' }, { $set: { status: 'CANCELLED', active: false, reason: 'EVENT_CANCELLED' } });
@@ -69,16 +67,20 @@ export class InvitingConcept {
     else await this.rows.updateMany({ event, active: true }, { $set: { active: false } });
     return { event };
   }
+  /** Persists expiry for overdue pending rows; called only from actions. */
+  async #expireOverdue(filter: { invitee?: string; event?: string }) {
+    await this.rows.updateMany({ ...filter, status: 'PENDING', deadline: { $lte: this.now() } }, { $set: { status: 'EXPIRED', active: false } });
+  }
+  /** Reads report an overdue pending invitation as expired before it is persisted. Pure. */
+  #view<T extends { status: InvitationStatus; deadline: number; active: boolean }>(row: T): T {
+    return row.status === 'PENDING' && row.deadline <= this.now() ? { ...row, status: 'EXPIRED', active: false } : row;
+  }
   async _mine({ invitee }: { invitee: string }) {
-    const rows = await this.rows.find({ invitee }, { projection: { _id: 0, invitee: 0 } }).sort({ start: -1 }).toArray();
-    return { invitations: JSON.stringify(rows), strikes: await this.rows.countDocuments({ invitee, strike: true }) };
+    const rows = (await this.rows.find({ invitee }, { projection: { _id: 0, invitee: 0, strike: 0 } }).sort({ start: -1 }).toArray()).map(r => this.#view(r));
+    return { invitations: JSON.stringify(rows) };
   }
-  async _overdue(_: Record<string, never>): Promise<Array<{ invitation: string }>> {
-    return (await this.rows.find({ status: 'PENDING', deadline: { $lte: this.now() } }).toArray()).map(row => ({ invitation: row.invitation }));
-  }
-  async _all(_: Record<string, never>): Promise<InvitationRow[]> { return this.rows.find({}, { projection: { _id: 0 } }).toArray(); }
+  async _all(_: Record<string, never>): Promise<InvitationRow[]> { return (await this.rows.find({}, { projection: { _id: 0, strike: 0 } }).toArray()).map(r => this.#view(r)); }
   async _count({ event }: { event: string }) { return { count: await this.rows.countDocuments({ event, status: 'ACCEPTED', active: true }) }; }
-  async _strikes({ invitee }: { invitee: string }) { return { strikes: await this.rows.countDocuments({ invitee, strike: true }) }; }
-  async _forUser({ invitee }: { invitee: string }): Promise<InvitationRow[]> { return this.rows.find({ invitee }, { projection: { _id: 0 } }).toArray(); }
+  async _forUser({ invitee }: { invitee: string }): Promise<InvitationRow[]> { return (await this.rows.find({ invitee }, { projection: { _id: 0, strike: 0 } }).toArray()).map(r => this.#view(r)); }
 }
 
