@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { api } from './api';
 import { addDays, bostonTime, leadDays as LEAD_DAYS, localDay, locations, radii, suggestedTags, didYouMean, normalizeTag } from '../shared/catalog';
+const emit = defineEmits<{ openInvitations: [] }>();
 type RequestView = { request: string; date: string; start: number; end: number; selected: string; location: string; radius: number; status: string; reason: string };
 // Default event length, for the client-side hint only; the server enforces EVENT_HOURS.
 const EVENT_HOURS = 2;
@@ -56,19 +57,73 @@ function submit() {
 }
 onMounted(() => act(refresh, ''));
 </script>
-<template><section><div class="page-heading"><div><p class="eyebrow">MAKE A LITTLE SPACE</p><h1>What are you up for?</h1><p>Choose your interests, then tell us when you're free.</p></div><button :disabled="busy" @click="act(refresh, '')">Refresh plans</button></div><p v-if="error" role="alert" class="notice">{{ error }}</p><p v-if="notice" role="status" class="notice">{{ notice }}</p>
-<div class="planning-grid"><section class="panel"><h2>Your creative interests</h2><p class="hint">No experience needed. Pick up to 12.</p><div class="actions"><button v-for="item in [...new Set([...suggestedTags, ...tags])]" :key="item" :class="{ primary: tags.includes(item) }" :aria-pressed="tags.includes(item)" :disabled="busy" @click="tag(item)">{{ item }}</button></div><form class="custom-interest" @submit.prevent="addCustom(custom)"><label>Something else?<input v-model="custom" maxlength="40" minlength="2" required placeholder="Your creative interest"></label><p v-if="suggestion" class="hint" role="status">Did you mean <b>{{ suggestion }}</b>? <button type="button" :disabled="busy" @click="addCustom(suggestion)">Use {{ suggestion }}</button></p><button :disabled="busy">Add interest</button></form></section>
-<section class="panel"><h2>Request a JAM</h2>
-<template v-if="open.length"><article v-for="r in open" :key="r.request"><span class="tag">{{ r.status === 'PENDING' ? 'Waiting for matching' : 'Matched' }}</span><p>{{ pretty(r.date) }}, {{ clock(r.start) }} – {{ clock(r.end) }} · {{ r.selected || 'Surprise me' }} · within {{ r.radius }} mi of {{ r.location }}</p><p v-if="r.status === 'MATCHED'">You have a group. Open Invitations to respond.</p><button v-if="r.status === 'PENDING'" :disabled="busy" @click="act(() => api('/requests/withdraw', { request: r.request }), 'Request withdrawn. You can choose a new date.')">Withdraw request</button></article></template>
-<form v-else novalidate @submit.prevent="submit">
-<p v-if="latest?.status === 'UNMATCHED'" class="notice" role="status">{{ unmatchedMessage(latest) }} Choose another date below. You can keep the same interest or pick a new one.</p>
-<p class="hint">Pick a date at least {{ LEAD_DAYS }} days ahead and at least {{ EVENT_HOURS }} hours of free time. Times are Boston time.</p>
-<label>Date<input v-model="date" type="date" :min="earliest" required></label>
-<label>Free from<input v-model="from" type="time" required></label><label>Free until<input v-model="until" type="time" required></label>
-<label>What do you want to do?<select v-model="choice"><option value="">Surprise me (any of my interests)</option><option v-for="t in tags" :key="t" :value="t">{{ t }}</option></select></label>
-<label>Starting from<select v-model="location"><option v-for="l in locations" :key="l.name" :value="l.name">{{ l.name }}</option></select></label>
-<label>Willing to travel<select v-model.number="radius"><option v-for="r in radii" :key="r" :value="r">up to {{ r }} mi</option></select></label>
-<p v-if="formProblem" class="hint" role="status">{{ formProblem }}</p>
-<button class="primary" :disabled="busy || !!formProblem">Find me a JAM</button></form>
-<details v-if="past.length"><summary>Previous requests</summary><p v-for="r in past" :key="r.request">{{ pretty(r.date) }} · {{ r.selected || 'Surprise me' }} · {{ r.reason.replaceAll('_', ' ').toLowerCase() }}</p></details></section></div>
-<section v-if="admin" class="panel admin-panel"><h2>Matching controls</h2><p>Matching runs automatically the day before each date. Run it now to match every waiting date up to {{ pretty(earliest) }}.</p><button :disabled="busy" @click="act(() => api('/admin/run'), 'Matching finished. Unmatched people were asked to choose another date.')">Run matching</button><article v-for="event in events" :key="event.event" class="admin-event"><b>{{ event.title }}</b> · {{ event.status }}<button v-if="['FORMING','CONFIRMED'].includes(event.status)" :disabled="busy" @click="act(() => api('/admin/cancel', { event: event.event }), 'Event cancelled. Its participants were asked to choose another date.')">Cancel event</button></article></section></section></template>
+<template>
+<section class="hero">
+  <div>
+    <h1>What are you up for?</h1>
+    <p class="hero-copy">Choose your interests, then tell us when you’re free.</p>
+  </div>
+</section>
+<p v-if="error" role="alert" class="notice error">{{ error }}</p>
+<p v-if="notice" role="status" class="notice">{{ notice }}</p>
+
+<section class="planner-grid">
+  <article class="panel interests-panel">
+    <div class="panel-heading">
+      <span class="panel-number">01</span>
+      <div><h2>Your creative interests</h2><p>No experience needed. Pick up to 12.</p></div>
+    </div>
+    <div class="interest-list">
+      <button v-for="item in [...new Set([...suggestedTags, ...tags])]" :key="item" type="button" :class="{ selected: tags.includes(item) }" :aria-pressed="tags.includes(item)" :disabled="busy" @click="tag(item)">{{ item }}</button>
+    </div>
+    <form class="add-interest" @submit.prevent="addCustom(custom)">
+      <label for="new-interest">Something else?</label>
+      <input id="new-interest" v-model="custom" maxlength="40" minlength="2" required placeholder="Your creative interest">
+      <button :disabled="busy">Add interest</button>
+      <p v-if="suggestion" class="suggestion" role="status">Did you mean <b>{{ suggestion }}</b>?<button type="button" class="text-button" :disabled="busy" @click="addCustom(suggestion)">Use {{ suggestion }}</button></p>
+    </form>
+    <p class="selection-count">{{ tags.length }} of 12 selected</p>
+  </article>
+
+  <article class="panel request-panel">
+    <div class="panel-heading">
+      <span class="panel-number">02</span>
+      <div><h2>Request a JAM</h2><p>Pick a date at least {{ LEAD_DAYS }} days ahead and at least {{ EVENT_HOURS }} hours of free time. Times are Boston time.</p></div>
+    </div>
+
+    <template v-if="open.length">
+      <div v-for="r in open" :key="r.request" class="success-card" role="status">
+        <p class="overline">{{ r.status === 'PENDING' ? 'WAITING FOR MATCHING' : 'MATCHED' }}</p>
+        <h3>{{ r.status === 'PENDING' ? 'We’re mixing your next JAM.' : 'You have a group.' }}</h3>
+        <p>{{ pretty(r.date) }}, {{ clock(r.start) }} – {{ clock(r.end) }} · {{ r.selected || 'Surprise me' }} · within {{ r.radius }} mi of {{ r.location }}<template v-if="r.status === 'MATCHED'"><br>Open Invitations to respond.</template></p>
+        <button v-if="r.status === 'PENDING'" type="button" :disabled="busy" @click="act(() => api('/requests/withdraw', { request: r.request }), 'Request withdrawn. You can choose a new date.')">Withdraw request</button>
+        <button v-else type="button" @click="emit('openInvitations')">Go to invitations</button>
+      </div>
+    </template>
+    <form v-else novalidate @submit.prevent="submit">
+      <p v-if="latest?.status === 'UNMATCHED'" class="notice" role="status">{{ unmatchedMessage(latest) }} Choose another date below. You can keep the same interest or pick a new one.</p>
+      <label><span>Date</span><input id="request-date" v-model="date" type="date" :min="earliest" required></label>
+      <div class="time-row">
+        <label><span>Free from</span><input id="request-from" v-model="from" type="time" required></label>
+        <label><span>Free until</span><input id="request-until" v-model="until" type="time" required></label>
+      </div>
+      <label><span>What do you want to do?</span><select id="request-choice" v-model="choice"><option value="">Surprise me (any of my interests)</option><option v-for="t in tags" :key="t" :value="t">{{ t }}</option></select></label>
+      <label><span>Starting from</span><select id="request-location" v-model="location"><option v-for="l in locations" :key="l.name" :value="l.name">{{ l.name }}</option></select></label>
+      <label><span>Willing to travel</span><select id="request-radius" v-model.number="radius"><option v-for="r in radii" :key="r" :value="r">up to {{ r }} mi</option></select></label>
+      <p v-if="formProblem" class="form-hint" role="status">{{ formProblem }}</p>
+      <button class="request-button" type="submit" :disabled="busy || !!formProblem">Request my JAM <span aria-hidden="true">→</span></button>
+    </form>
+
+    <details v-if="past.length" class="past-requests"><summary>Previous requests</summary><p v-for="r in past" :key="r.request">{{ pretty(r.date) }} · {{ r.selected || 'Surprise me' }} · {{ r.reason.replaceAll('_', ' ').toLowerCase() }}</p></details>
+  </article>
+</section>
+
+<section v-if="admin" class="panel admin-panel">
+  <div class="panel-heading">
+    <span class="panel-number">03</span>
+    <div><h2>Matching controls</h2><p>Matching runs automatically the day before each date. Run it now to match every waiting date up to {{ pretty(earliest) }}.</p></div>
+  </div>
+  <button class="solid-button" type="button" :disabled="busy" @click="act(() => api('/admin/run'), 'Matching finished. Unmatched people were asked to choose another date.')">Run matching</button>
+  <div v-for="event in events" :key="event.event" class="admin-event"><b>{{ event.title }}</b> · {{ event.status }}<button v-if="['FORMING','CONFIRMED'].includes(event.status)" class="outline-button" type="button" :disabled="busy" @click="act(() => api('/admin/cancel', { event: event.event }), 'Event cancelled. Its participants were asked to choose another date.')">Cancel event</button></div>
+</section>
+</template>

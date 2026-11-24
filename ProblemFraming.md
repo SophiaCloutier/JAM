@@ -38,31 +38,39 @@ Comparable Apps
 
 # Solution sketch
 
-JAM is a low-stakes app that connects beginners in Boston who want to explore creative hobbies and make art with others. Users create a profile by listing their creative skills, interests, location preferences, and availability. Based on these preferences, JAM automatically generates local creative events and invites users to participate in one event at a time, giving them the option to accept or decline without any ongoing commitment.
+JAM is a low-stakes app that connects beginners in Boston who want to explore creative hobbies and make art with others. Users sign up with a college (.edu) email and list the creative interests they would like to try, choosing from suggested tags or writing their own. No experience is needed.
 
-For activities that require complementary skills, such as forming a band or hosting a jam session, JAM brings together participants who can fill the necessary roles. For more casual activities, such as drawing or scrapbooking, it matches people based on shared interests, availability, and location preferences.
+When they have free time, users request a JAM for a date at least two days ahead. A request gives a free-time window, a starting location with how far they are willing to travel, and either one interest they want to do or "Surprise me" (any of their interests). The day before the date, JAM groups requests into small groups of at least three people with the same or a related interest (painting and drawing, for example), overlapping free time, and a meeting area everyone can reach. It then plans each group's event at a café in that area, at a time when the café is open and has seats.
 
-JAM lifts the matching and scheduling burden off users, reducing the pressure to approach potential collaborators individually or coordinate an event themselves. Each event is a standalone opportunity to make art together, develop creative skills, and meet people with similar interests; whether participants keep in touch afterward is up to them. This makes it easier for beginners to step outside their comfort zones and explore creative interests they might otherwise miss out on due to limited connections or confidence. 
+Each member receives one invitation at a time and has six hours to accept or decline, with no ongoing commitment. An event is confirmed once three people accept and is cancelled if it does not reach three by eight hours before it starts. Anyone who could not be placed is told why and can request another date.
+
+JAM lifts the matching and scheduling burden off users, reducing the pressure to approach potential collaborators individually or coordinate an event themselves. Each event is a standalone opportunity to make art together and meet people with similar interests; whether participants keep in touch afterward is up to them.
+
+Activities that need complementary skills, such as forming a band, and separating skills from interests are planned for later and are not part of the current version.
 
 # Ethical analysis
+
+Each insight's design response is followed by its status in the current version.
 
 ## Insight \#1
 
 Dimension: Pervasiveness  
 Prompt: Widespread Use  
 Feature: Event generation  
-Observation: Below a certain number of users, the pool of people sharing skills, interests and availability is too small.   
-Consequence: Some users may be matched with the same people over and over again, or never matched at all. As adoption grows, the pool widens matches become more varied.   
-Design response: Use a history-aware randomized match to avoid repeat pairings and prioritize users not invited recently.
+Observation: Below a certain number of users, the pool of people sharing interests and availability is too small.  
+Consequence: Some users may be matched with the same people over and over again, or never matched at all. As adoption grows, the pool widens and matches become more varied.  
+Design response: Widen each pool by matching related interests, not only identical ones, and let users choose "Surprise me" to be matched on any of their interests. Prefer people who have not met recently.  
+Current status: Related-interest matching and "Surprise me" are implemented. Users who are not matched are told why and can request another date. History-aware matching is not yet implemented.
 
 ## Insight \#2
 
 Dimension: Stakeholders  
 Prompt: Indirect stakeholders  
 Feature: Event locations  
-Observation: The app places events in public cafes around Cambridge, but per out initial design, cafe staff and regular customers never opted into JAM.  
-Consequence: If many events map to the same cafe, groups can fill tables for hours, crowd out paying customers, and frustrate cafe staff.  
-Design response: Cap events per venue per day, aim for a large enough list of cafes so that a truly random algorithm avoids clashes, and perhaps introduce an opt-in option for cafe owners.
+Observation: The app places events in public cafés around Cambridge and Boston, but café staff and regular customers never opted into JAM.  
+Consequence: If many events map to the same café, groups can fill tables for hours, crowd out paying customers, and frustrate café staff.  
+Design response: Give each venue a JAM seat count, a daily event limit, and opening hours; make overlapping events at one venue share its seats; spread events across venues; and eventually let café owners opt in.  
+Current status: Seat counts, daily limits, opening hours, shared seats, and spreading across venues are implemented. The venue list contains sample cafés, not partnerships, and owner opt-in is future work.
 
 ## Insight \#3
 
@@ -71,23 +79,25 @@ Prompt: Long-term use
 Feature: No in-app messaging  
 Observation: JAM has no way to message or follow other attendees, so connections must continue in person.  
 Consequence: Event attendees who would like to pursue a friendship are forced to favor in-person interactions and exchange information on their own terms. Also, no one will be able to contact them uninvited.  
-Design response: Keep messaging out, and end each event with an in-app prompt encouraging attendees to swap contact details in person for shy beginners who might need a push.
+Design response: Keep messaging out, and end each event with an in-app prompt encouraging attendees to swap contact details in person.  
+Current status: There is no messaging. The end-of-event prompt is not yet implemented.
 
 ## Insight \#4
 
-Dimension: Stakeholders   
+Dimension: Stakeholders  
 Prompt: Direct Stakeholders  
 Feature: RSVP  
 Observation: Users accept an invitation to a small group event, but someone may accept and then not attend.  
 Consequence: Other participants waste time, and the event may not be as fun as it was intended when proposed.  
-Design response: Require a small deposit when accepting, refunded upon attendance or cancellation before a clearly stated deadline. Provide deposit waivers and emergency exceptions via admin contact so accountability does not exclude users with limited funds or penalize unavoidable absences. 
+Design response: Make answers firm and time-limited, explain the consequences before a user cancels, and only hold an event once enough people commit. A deposit or reliability score remains under consideration.  
+Current status: Accepting or declining is final, invitations expire after six hours, users see a warning before cancelling after accepting, and an event is confirmed only at three acceptances. No deposit or penalty is implemented.
 
 ## Insight \#5
 
 Dimension: Values  
 Prompt: Value Tension  
 Feature: Automatic event matching  
-Observation: Matching happens automatically according to shared skills, interests, availability, and location.  
+Observation: Matching happens automatically according to shared interests, availability, and location.  
 Consequence: A beginner matched with advanced people may feel out of place, and an advanced person with beginners may feel unchallenged. Strict matching avoids this but limits learning, creating tension between proficiency and inclusion.  
-Design response: Split profiles into skills (good at) and interests (want to learn). Default to beginner-friendly events; experience-required ones are opt-in.
-
+Design response: Present every event as beginner-friendly. Later, split profiles into skills (good at) and interests (want to learn), and make experience-required events opt-in.  
+Current status: Profiles hold interests only, and the app states that no experience is needed. The skills/interests split is planned for the beta.

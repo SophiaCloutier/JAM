@@ -11,11 +11,30 @@ async function submit() {
 }
 </script>
 <template>
-  <div class="welcome-grid">
-    <section class="intro"><p class="eyebrow">A LITTLE TIME. SOMETHING CREATIVE.</p><h1>Make something.<br>Meet someone.</h1><p class="lede">Find your people through a shared creative afternoon. No portfolio, no pressure. Just show up curious.</p><div class="steps"><p><b>Tell us what you like.</b><span>Beginners are always welcome.</span></p><p><b>Find a little free time.</b><span>One slot, one small group.</span></p><p><b>Say yes to a JAM.</b><span>Make something together.</span></p></div></section>
-    <section class="panel auth"><p class="eyebrow">WELCOME TO JAM</p><h2>{{ mode === 'register' ? 'A good place to start.' : 'Welcome back.' }}</h2><p>{{ mode === 'register' ? 'Create an account with your college email.' : 'Your next creative plan is waiting.' }}</p>
-      <form @submit.prevent="submit"><label>College email<input v-model="email" type="email" autocomplete="email" required maxlength="254" placeholder="you@college.edu"></label><label>Password<input v-model="password" type="password" :autocomplete="mode === 'register' ? 'new-password' : 'current-password'" :minlength="mode === 'register' ? 10 : 1" maxlength="128" required></label><p v-if="mode === 'register'" class="hint">At least 10 characters. Alpha accounts check the .edu suffix; email ownership is not yet verified.</p><p v-if="error" role="alert" class="notice">{{ error }}</p><button class="primary" :disabled="busy">{{ busy ? 'Please wait…' : mode === 'register' ? 'Create account' : 'Sign in' }}</button></form>
-      <button class="text-button" :disabled="busy" @click="mode = mode === 'register' ? 'login' : 'register'; error = ''">{{ mode === 'register' ? 'Already joined? Sign in' : 'New here? Create an account' }}</button>
+  <div class="auth-grid">
+    <section class="hero auth-intro">
+      <p class="overline">A LITTLE TIME. SOMETHING CREATIVE.</p>
+      <h1>Make something. Meet someone.</h1>
+      <p class="hero-copy">No portfolio, no pressure. Just show up curious.</p>
+      <div class="auth-steps">
+        <p>Tell us what you like.</p>
+        <p>Pick a day you're free.</p>
+        <p>Say yes to a JAM.</p>
+      </div>
+    </section>
+    <section class="panel request-panel auth-panel">
+      <div class="panel-heading">
+        <span class="panel-number">{{ mode === 'register' ? '01' : '→' }}</span>
+        <div><h2>{{ mode === 'register' ? 'A good place to start.' : 'Welcome back.' }}</h2><p>{{ mode === 'register' ? 'Create an account with your college email.' : 'Your next creative plan is waiting.' }}</p></div>
+      </div>
+      <form @submit.prevent="submit">
+        <label><span>College email</span><input id="auth-email" v-model="email" type="email" autocomplete="email" required maxlength="254" placeholder="you@college.edu"></label>
+        <label><span>Password</span><input id="auth-password" v-model="password" type="password" :autocomplete="mode === 'register' ? 'new-password' : 'current-password'" :minlength="mode === 'register' ? 10 : 1" maxlength="128" required></label>
+        <p v-if="mode === 'register'" class="form-hint">At least 10 characters. Alpha accounts check the .edu suffix; email ownership is not yet verified.</p>
+        <p v-if="error" role="alert" class="notice error">{{ error }}</p>
+        <button class="request-button" :disabled="busy">{{ busy ? 'Please wait…' : mode === 'register' ? 'Create account' : 'Sign in' }} <span aria-hidden="true">→</span></button>
+      </form>
+      <button class="text-button" type="button" :disabled="busy" @click="mode = mode === 'register' ? 'login' : 'register'; error = ''">{{ mode === 'register' ? 'Already joined? Sign in' : 'New here? Create an account' }}</button>
     </section>
   </div>
 </template>
