@@ -108,7 +108,7 @@ export class MatchingConcept {
         `Your free time must be on the chosen date and last at least ${timing.duration / 3600000} hours.`,
       );
     if (!locations.some(l => l.name === location) || !radii.includes(radius))
-      throw new InvalidSlot('Choose a starting location and a travel distance from the list.');
+      throw new InvalidSlot('Choose a place for "Near" and a distance for "Within" from the lists.');
     const reachable = reachableAreas(location, radius);
     if (!reachable.length)
       throw new InvalidSlot(`No JAM meeting area is within ${radius} miles of ${location}. Try a larger distance.`);

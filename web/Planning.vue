@@ -271,18 +271,23 @@ onMounted(() => act(refresh, ''));
             <option v-for="t in tags" :key="t" :value="t">{{ t }}</option>
           </select></label
         >
-        <label
-          ><span>Starting from</span
-          ><select id="request-location" v-model="location">
-            <option v-for="l in locations" :key="l.name" :value="l.name">{{ l.name }}</option>
-          </select></label
-        >
-        <label
-          ><span>Willing to travel</span
-          ><select id="request-radius" v-model.number="radius">
-            <option v-for="r in radii" :key="r" :value="r">up to {{ r }} mi</option>
-          </select></label
-        >
+        <fieldset class="location-group">
+          <legend>Location</legend>
+          <div class="time-row">
+            <label
+              ><span>Near</span
+              ><select id="request-location" v-model="location">
+                <option v-for="l in locations" :key="l.name" :value="l.name">{{ l.name }}</option>
+              </select></label
+            >
+            <label
+              ><span>Within</span
+              ><select id="request-radius" v-model.number="radius">
+                <option v-for="r in radii" :key="r" :value="r">{{ r }} {{ r === 1 ? 'mile' : 'miles' }}</option>
+              </select></label
+            >
+          </div>
+        </fieldset>
         <p v-if="formProblem" class="form-hint" role="status">{{ formProblem }}</p>
         <button class="request-button" type="submit" :disabled="busy || !!formProblem">
           Request my JAM <span aria-hidden="true">→</span>

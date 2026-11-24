@@ -84,7 +84,9 @@ h1, h2, h3, p { margin-top: 0; }
 /* Interests: neutral when unselected, colored when selected. */
 .interest-list { display: flex; flex-wrap: wrap; gap: 10px; }
 .interest-list button { border: 1px solid var(--navy); padding: 13px 17px 11px; color: var(--navy); background: transparent; font-weight: 600; text-transform: lowercase; transition: transform .15s ease, color .15s ease, background .15s ease, box-shadow .15s ease; }
-.interest-list button:hover:not(:disabled) { transform: translateY(-2px); background: color-mix(in srgb, var(--cream) 60%, transparent); }
+/* One hover for every interest: lift with a shadow. Only unselected ones also tint; selected ones keep their fill so text stays readable. */
+.interest-list button:hover:not(:disabled) { transform: translate(-1px, -3px); box-shadow: 3px 3px 0 var(--navy); }
+.interest-list button:not(.selected):hover:not(:disabled) { background: color-mix(in srgb, var(--cream) 60%, transparent); }
 .interest-list button.selected { color: var(--cream); background: var(--merlot); border-color: var(--merlot); box-shadow: none; transform: translate(-1px, -1px); }
 .interest-list button.selected:nth-child(4n + 2) { color: var(--cream); background: var(--moss); border-color: var(--moss); }
 .interest-list button.selected:nth-child(4n + 3) { color: var(--cream); background: var(--navy); border-color: var(--navy); }
@@ -108,6 +110,11 @@ h1, h2, h3, p { margin-top: 0; }
 .request-panel label, .auth-panel label { display: grid; gap: 8px; }
 .request-panel label > span, .auth-panel label > span { color: var(--merlot); font-size: .78rem; font-weight: 600; }
 .time-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+/* Location: a heading with Near and Within grouped underneath it. */
+.location-group { display: grid; gap: 10px; min-width: 0; margin: 0; border: 0; padding: 0; }
+.location-group legend { margin-bottom: 10px; padding: 0; color: var(--merlot); font-size: .78rem; font-weight: 600; }
+.location-group label { padding-left: 12px; border-left: 2px solid var(--merlot); }
 
 /* Date picker: choosable days are outlined boxes that change on hover; unavailable days are faded text with no box. */
 .date-field { display: grid; gap: 8px; }
