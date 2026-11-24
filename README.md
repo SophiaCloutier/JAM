@@ -49,12 +49,12 @@ Each date is matched once, starting the day before it. Admins can run matching e
 2. With the server stopped, run `bun run build`, then `bun run seed:requests`. This creates about 60 users with requests for the earliest requestable date (two days from today, Boston time). It should end with `61 new requests for <date>`.
 3. Run `bun start`, register with your admin email, choose interests, and request the **earliest date the date picker allows** with one of these:
 
-   | Interest | Free time | Starting from | Distance |
+   | Interest | Free time | Near | Within |
    |---|---|---|---|
-   | guitar | 19:00–22:00 | Kendall Square | 1 mi |
-   | knitting | 14:00–17:00 | Harvard Square | 1 mi |
-   | painting | 10:00–13:00 | Downtown Boston | 1 mi |
-   | Surprise me (origami or scrapbooking in your profile) | 13:00–17:00 | MIT campus | 3 mi |
+   | guitar | 19:00–22:00 | Kendall Square | 1 mile |
+   | knitting | 14:00–17:00 | Harvard Square | 1 mile |
+   | painting | 10:00–13:00 | Downtown Boston | 1 mile |
+   | Surprise me (origami or scrapbooking in your profile) | 13:00–17:00 | MIT campus | 3 miles |
 
 4. Click **Run matching**, then open **Invitations** to see your café and time.
 5. An event is confirmed at three acceptances. Accept yours, then sign in as two group members (for example `guitar1@example.edu` and `guitar2@example.edu`, password `jam-demo-password`) and accept theirs.
