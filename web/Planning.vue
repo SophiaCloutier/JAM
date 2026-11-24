@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { api } from './api';
+import DatePicker from './DatePicker.vue';
 import {
   addDays,
   bostonTime,
@@ -255,7 +256,10 @@ onMounted(() => act(refresh, ''));
         <p v-if="latest?.status === 'UNMATCHED'" class="notice" role="status">
           {{ unmatchedMessage(latest) }} Choose another date below. You can keep the same interest or pick a new one.
         </p>
-        <label><span>Date</span><input id="request-date" v-model="date" type="date" :min="earliest" required /></label>
+        <div class="date-field">
+          <span id="request-date-label">Date</span>
+          <DatePicker id="request-date" v-model="date" :min="earliest" labelledby="request-date-label" />
+        </div>
         <div class="time-row">
           <label><span>Free from</span><input id="request-from" v-model="from" type="time" required /></label>
           <label><span>Free until</span><input id="request-until" v-model="until" type="time" required /></label>
