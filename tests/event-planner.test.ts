@@ -71,7 +71,13 @@ function cafe(name: string, area: string, capacity: number, extra: Partial<Venue
 let counter = 0;
 
 /** A cluster of `n` members (oldest first) sharing a window and reachable areas. */
-function cluster(tag: string, n: number, from = '10:00', until = '18:00', areas = ['Campus', 'Cambridge', 'Boston']): PlanCluster {
+function cluster(
+  tag: string,
+  n: number,
+  from = '10:00',
+  until = '18:00',
+  areas = ['Campus', 'Cambridge', 'Boston'],
+): PlanCluster {
   counter++;
   return {
     cluster: `c${counter}-${tag}`,
@@ -105,9 +111,7 @@ function everyone(events: PlannedEvent[]) {
 
 /** Seats taken at one venue at the moment `moment`. */
 function seatedAt(events: PlannedEvent[], moment: number) {
-  return events
-    .filter(e => e.start <= moment && moment < e.end)
-    .reduce((n, e) => n + e.members.length, 0);
+  return events.filter(e => e.start <= moment && moment < e.end).reduce((n, e) => n + e.members.length, 0);
 }
 
 /** Checks every invariant the planner promises, for any input. */
@@ -159,7 +163,13 @@ describe('sessionsFor', () => {
   // covers: opening between grid points; before earliest; event would end after closing
   test('sessions lie on the grid, inside opening hours, and not before the earliest start', () => {
     const v = cafe('A', 'Campus', 8, { opens: '08:15', closes: '12:00' });
-    const sessions = sessionsFor({ date: DATE, venues: [v], earliest: at('09:00'), duration: 2 * HOUR, gridMinutes: 30 });
+    const sessions = sessionsFor({
+      date: DATE,
+      venues: [v],
+      earliest: at('09:00'),
+      duration: 2 * HOUR,
+      gridMinutes: 30,
+    });
     expect(sessions.map(s => s.start)).toEqual([at('09:00'), at('09:30'), at('10:00')]);
   });
 });
@@ -178,7 +188,8 @@ describe('planEvents: invariants', () => {
 
     assertValid(events, clusters, sampleVenues);
     expect(events.some(e => e.tag === 'knitting')).toBe(true);
-    expect(events.some(e => e.tag === 'pottery')).toBe(false); // nothing is open for a full two hours inside that window
+    // Nothing is open for a full two hours inside the pottery window.
+    expect(events.some(e => e.tag === 'pottery')).toBe(false);
   });
 
   // covers: before / after the earliest allowed start

@@ -73,14 +73,24 @@ const date = addDays(localDay(Date.now()), 2);
 
 let app = buildServer();
 
-type Invitation = { invitation: string; event: string; details: string; start: number; end: number; status: string; reason: string };
+type Invitation = {
+  invitation: string;
+  event: string;
+  details: string;
+  start: number;
+  end: number;
+  status: string;
+  reason: string;
+};
 
 async function call(path: string, body: object = {}, cookie = '') {
-  const r = await app.handle(new Request(`${ORIGIN}/api${path}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Origin: ORIGIN, Cookie: cookie },
-    body: JSON.stringify(body),
-  }));
+  const r = await app.handle(
+    new Request(`${ORIGIN}/api${path}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Origin: ORIGIN, Cookie: cookie },
+      body: JSON.stringify(body),
+    }),
+  );
   return {
     status: r.status,
     data: await r.json(),
@@ -218,7 +228,8 @@ describe('matching and planning end to end', () => {
     await submit(e, '');
     await runMatching();
 
-    // No chosen interest has three requesters, so profile interests form one drawing group; D qualifies through painting (0.7).
+    // No chosen interest has three requesters, so profile interests form one drawing group;
+    // D qualifies through painting (0.7).
     const events = new Set<string>();
     for (const cookie of [a, b, c, d]) {
       const rows = await inbox(cookie);
@@ -269,7 +280,8 @@ describe('matching and planning end to end', () => {
   // covers: chosen interest with no group, falling back to an exact profile interest
   test('option 1 fallback: a chosen interest with no group joins a group through an exact profile interest', async () => {
     // Pottery has no group and no related interest, so the chosen-interest stages cannot place this person;
-    // only the profile-interest stages (join on profile interests, then join leftovers) can put them in the drawing group.
+    // only the profile-interest stages (join on profile interests, then join leftovers)
+    // can put them in the drawing group.
     const drawers: string[] = [];
     for (const name of ['d1', 'd2', 'd3']) {
       const cookie = await person(name, ['drawing']);
@@ -293,7 +305,11 @@ describe('matching and planning end to end', () => {
   test('option 2 alone: Surprise me requests form a group from shared profile interests', async () => {
     // Nobody chose an interest, so the chosen stages do nothing and the group must come from profile interests.
     const knitters: string[] = [];
-    for (const [name, interests] of [['k1', ['knitting', 'origami']], ['k2', ['knitting']], ['k3', ['guitar', 'knitting']]] as const) {
+    for (const [name, interests] of [
+      ['k1', ['knitting', 'origami']],
+      ['k2', ['knitting']],
+      ['k3', ['guitar', 'knitting']],
+    ] as const) {
       const cookie = await person(name, [...interests]);
       knitters.push(cookie);
       await submit(cookie, '');
@@ -318,7 +334,8 @@ describe('matching and planning end to end', () => {
 
   // covers: cluster split, some members without a seat (NO_VENUE)
   test('a cluster bigger than the only venue open in its window is split: six get seats, the youngest two get NO_VENUE', async () => {
-    // 07:00-09:00 within 1 mi of MIT reaches Campus and Cambridge; only one 6-seat sample café is open for that whole window.
+    // 07:00-09:00 within 1 mi of MIT reaches Campus and Cambridge;
+    // only one 6-seat sample café is open for that whole window.
     const early = request('drawing', date, '07:00', '09:00');
     const cookies: string[] = [];
     for (let i = 1; i <= 8; i++) {
@@ -369,7 +386,9 @@ describe('request endpoints', () => {
 describe('event lifecycle', () => {
   // covers: cancel after accepting, before the cutoff
   test('cancelling after accepting drops a confirmed event below three; before the cutoff it goes back to forming', async () => {
-    const { cookies: [a, b, c] } = await invitedGroup();
+    const {
+      cookies: [a, b, c],
+    } = await invitedGroup();
     for (const cookie of [a, b, c]) await accept(cookie);
     expect(await eventStatus(a)).toBe('CONFIRMED');
 
@@ -384,7 +403,10 @@ describe('event lifecycle', () => {
 
   // covers: cancel after accepting, after the cutoff; accepted and owner-cancelled invitations
   test('cancelling after the cutoff drops the event below three and cancels it at once', async () => {
-    const { cookies: [a, b, c], start } = await invitedGroup();
+    const {
+      cookies: [a, b, c],
+      start,
+    } = await invitedGroup();
     for (const cookie of [a, b, c]) await accept(cookie);
 
     passCutoff(start);
@@ -401,7 +423,10 @@ describe('event lifecycle', () => {
 
   // covers: cutoff review with fewer than three accepted; accepted and silent (past deadline) invitations
   test('reviewDue at the cutoff cancels an event short of three, and accepted requests become EVENT_CANCELLED', async () => {
-    const { cookies: [a, b, c], start } = await invitedGroup();
+    const {
+      cookies: [a, b, c],
+      start,
+    } = await invitedGroup();
     await accept(a);
     await accept(b);
 
@@ -425,7 +450,9 @@ describe('event lifecycle', () => {
   // covers: /admin/cancel by a non-admin, by an admin for an upcoming event and for an unknown event;
   //         accepted and pending (before deadline) invitations
   test('/admin/cancel is admin-only and cancels the event; every member is asked to choose another date', async () => {
-    const { cookies: [a, b, c] } = await invitedGroup();
+    const {
+      cookies: [a, b, c],
+    } = await invitedGroup();
     await accept(a);
     const [{ event }] = await inbox(a);
 

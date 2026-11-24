@@ -187,10 +187,16 @@ export class EventGeneratingConcept {
       return [];
     }
   }
-  #isClosed(e: EventRow) { return e.status === 'CANCELLED' || e.status === 'DONE'; }
-  #pastCutoff(e: EventRow) { return this.now() >= e.start - timing.cutoff; }
+  #isClosed(e: EventRow) {
+    return e.status === 'CANCELLED' || e.status === 'DONE';
+  }
+  #pastCutoff(e: EventRow) {
+    return this.now() >= e.start - timing.cutoff;
+  }
   /** Display details for invitees. Members are left out so invitees never see each other's ids. */
-  #details({ members: _, ...e }: EventRow) { return JSON.stringify(e); }
+  #details({ members: _, ...e }: EventRow) {
+    return JSON.stringify(e);
+  }
   #delivery(e: EventRow) {
     return {
       event: e.event,

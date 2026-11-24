@@ -21,9 +21,9 @@ import { didYouMean } from '../shared/catalog.ts';
 describe('didYouMean: near-misses of suggested tags', () => {
   // covers: missing letter, swapped letters, case/spacing plus a typo; longer words
   test('suggests the tag a typo probably meant', () => {
-    expect(didYouMean('potery')).toBe('pottery');        // missing letter
-    expect(didYouMean('drawnig')).toBe('drawing');       // swapped letters
-    expect(didYouMean('Paintng ')).toBe('painting');     // case, space, missing letter
+    expect(didYouMean('potery')).toBe('pottery'); // missing letter
+    expect(didYouMean('drawnig')).toBe('drawing'); // swapped letters
+    expect(didYouMean('Paintng ')).toBe('painting'); // case, space, missing letter
   });
 
   // covers: short word, one typo
@@ -35,13 +35,13 @@ describe('didYouMean: near-misses of suggested tags', () => {
 describe('didYouMean: nothing to suggest', () => {
   // covers: exact suggested tag, alias
   test('exact tags and aliases need no suggestion', () => {
-    expect(didYouMean('pottery')).toBeUndefined();       // exact: nothing to suggest
-    expect(didYouMean('ceramics')).toBeUndefined();      // alias resolves to pottery exactly
+    expect(didYouMean('pottery')).toBeUndefined(); // exact: nothing to suggest
+    expect(didYouMean('ceramics')).toBeUndefined(); // alias resolves to pottery exactly
   });
 
   // covers: unrelated real interest; short word with two typos
   test('different interests are left alone', () => {
-    expect(didYouMean('dance')).toBeUndefined();         // a real different interest
-    expect(didYouMean('rum')).toBeUndefined();           // short words get only one typo
+    expect(didYouMean('dance')).toBeUndefined(); // a real different interest
+    expect(didYouMean('rum')).toBeUndefined(); // short words get only one typo
   });
 });

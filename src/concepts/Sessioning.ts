@@ -6,7 +6,8 @@ export class SessioningConcept {
   async start({ subject }: { subject: string }) {
     await this.sessions.createIndex({ session: 1 }, { unique: true });
     await this.sessions.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
-    const session = crypto.randomUUID(), expiresAt = new Date(Date.now() + 7 * 86400000);
+    const session = crypto.randomUUID(),
+      expiresAt = new Date(Date.now() + 7 * 86400000);
     await this.sessions.insertOne({ session, subject, expiresAt });
     return { session, expiresAt };
   }
@@ -21,7 +22,12 @@ export class SessioningConcept {
   }
   async authorize({ session }: { session: string }) {
     const { user } = await this.current({ session });
-    if (!(process.env.ADMIN_EMAILS ?? '').split(',').map(s => s.trim().toLowerCase()).includes(user))
+    if (
+      !(process.env.ADMIN_EMAILS ?? '')
+        .split(',')
+        .map(s => s.trim().toLowerCase())
+        .includes(user)
+    )
       throw new Forbidden('An administrator must run this action.');
     return { user };
   }

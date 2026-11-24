@@ -122,7 +122,10 @@ describe('expiry', () => {
 
     // No periodic job ran, yet every read reports the overdue invitation as expired and inactive.
     expect((await mine('a'))[0]).toMatchObject({ status: 'EXPIRED', active: false });
-    expect((await inviting._all({})).find(r => r.invitation === invitation)).toMatchObject({ status: 'EXPIRED', active: false });
+    expect((await inviting._all({})).find(r => r.invitation === invitation)).toMatchObject({
+      status: 'EXPIRED',
+      active: false,
+    });
 
     // The stale row must not block the next invitation through the one-active-invitation index.
     await inviting.invite(delivery('a', 'another'));

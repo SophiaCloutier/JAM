@@ -64,7 +64,13 @@ function toMinutes(hhmm: string) {
 }
 
 /** Every (venue, start) on the grid whose whole event lies inside opening hours and is not before `earliest`. */
-export function sessionsFor({ date, venues, earliest, duration, gridMinutes }: Pick<PlanInput, 'date' | 'venues' | 'earliest' | 'duration' | 'gridMinutes'>): Session[] {
+export function sessionsFor({
+  date,
+  venues,
+  earliest,
+  duration,
+  gridMinutes,
+}: Pick<PlanInput, 'date' | 'venues' | 'earliest' | 'duration' | 'gridMinutes'>): Session[] {
   const sessions: Session[] = [];
   for (const venue of venues) {
     const closes = bostonTime(date, venue.closes);
@@ -82,7 +88,9 @@ export function sessionsFor({ date, venues, earliest, duration, gridMinutes }: P
 export function planEvents(input: PlanInput): PlannedEvent[] {
   const { date, minSize, maxSize, seed } = input;
   const clusters = input.clusters
-    .filter(c => Number.isFinite(c.start) && Number.isFinite(c.end) && Array.isArray(c.areas) && Array.isArray(c.members))
+    .filter(
+      c => Number.isFinite(c.start) && Number.isFinite(c.end) && Array.isArray(c.areas) && Array.isArray(c.members),
+    )
     .sort((a, b) => a.cluster.localeCompare(b.cluster));
 
   // Each request appears once; members arrive oldest first.
@@ -162,11 +170,13 @@ export function planEvents(input: PlanInput): PlannedEvent[] {
     for (const p of members) placed.add(p.request);
   }
 
-  // Top-up: leftovers take spare seats in an open session with the same tag inside their own cluster's window and areas.
+  // Top-up: leftovers take spare seats in an open session with the same tag,
+  // inside their own cluster's window and areas.
   const hasSpareSeat = (e: Open) =>
     e.members.length < Math.min(maxSize, e.venue.capacity) && occupied(e.venue, e.start, e.end) < e.venue.capacity;
   const smallestFirst = (a: Open, b: Open) => {
-    const ka = tieKey(a, a.tag), kb = tieKey(b, b.tag);
+    const ka = tieKey(a, a.tag),
+      kb = tieKey(b, b.tag);
     return a.members.length - b.members.length || hash(ka) - hash(kb) || ka.localeCompare(kb);
   };
   for (const cluster of clusters) {

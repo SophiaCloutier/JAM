@@ -48,7 +48,8 @@ describe('concept independence', () => {
       for (const spec of specifiers(readFileSync(join(conceptsDir, file), 'utf8'))) {
         if (!spec.startsWith('.')) continue;
         const target = resolve(conceptsDir, spec);
-        if (dirname(target) === conceptsDir && owner(target) !== owner(file)) violations.push(`${file} imports ${spec}`);
+        if (dirname(target) === conceptsDir && owner(target) !== owner(file))
+          violations.push(`${file} imports ${spec}`);
       }
     }
     expect(violations).toEqual([]);

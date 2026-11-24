@@ -101,11 +101,26 @@ const limits = JSON.stringify({ Campus: 8, Cambridge: 6, Boston: 8 });
 let now = bostonTime(THURSDAY, '15:00');
 const matching = new MatchingConcept(() => now);
 
-type Ask = { selected?: string; interests?: string[]; date?: string; from?: string; until?: string; location?: string; radius?: number };
+type Ask = {
+  selected?: string;
+  interests?: string[];
+  date?: string;
+  from?: string;
+  until?: string;
+  location?: string;
+  radius?: number;
+};
 
 /** Submits a request. Each call is one second later, so "oldest first" is deterministic. */
 function ask(user: string, options: Ask = {}) {
-  const { selected = '', date = SATURDAY, from = '10:00', until = '16:00', location = 'MIT campus', radius = 1 } = options;
+  const {
+    selected = '',
+    date = SATURDAY,
+    from = '10:00',
+    until = '16:00',
+    location = 'MIT campus',
+    radius = 1,
+  } = options;
   const interests = options.interests ?? [selected || 'drawing'];
   now += 1000;
   return matching.submit({
@@ -161,7 +176,14 @@ async function clusterOf(user: string) {
   return undefined;
 }
 
-type Planning = { cluster: string; tag: string; start: number; end: number; areas: string[]; members: { request: string; user: string }[] };
+type Planning = {
+  cluster: string;
+  tag: string;
+  start: number;
+  end: number;
+  areas: string[];
+  members: { request: string; user: string }[];
+};
 
 async function planning() {
   const rows = await matching._planning({});
@@ -226,7 +248,7 @@ describe('openDue', () => {
 
 describe('withdraw and missed dates', () => {
   // covers: someone else's request; owner's waiting request; date already reached
-  test('withdraw only affects the owner\'s waiting request; dates already reached are marked too late', async () => {
+  test("withdraw only affects the owner's waiting request; dates already reached are marked too late", async () => {
     const { request } = await ask('a');
     await expect(matching.withdraw({ user: 'intruder', request })).rejects.toBeInstanceOf(SlotUnavailable);
     await matching.withdraw({ user: 'a', request });
@@ -248,7 +270,10 @@ describe('clustering: similarity and options', () => {
     await runChain();
 
     const tags = (await clusters()).map(c => [c.tag, c.size]).sort();
-    expect(tags).toEqual([['drawing', 3], ['painting', 3]]);
+    expect(tags).toEqual([
+      ['drawing', 3],
+      ['painting', 3],
+    ]);
   });
 
   // covers: related (0.7); chosen interest
@@ -290,7 +315,8 @@ describe('clustering: ties and hard constraints', () => {
   test('ties on similarity go to the smaller cluster, and availability is a hard constraint', async () => {
     await askAll(['m1', 'm2', 'm3', 'm4'], { selected: 'drawing', from: '09:00', until: '11:00' });
     await askAll(['a1', 'a2', 'a3'], { selected: 'drawing', from: '15:00', until: '17:00' });
-    await ask('late', { interests: ['drawing'], from: '08:00', until: '18:00' }); // Surprise me: joins after clusters form
+    // Surprise me: joins after clusters form.
+    await ask('late', { interests: ['drawing'], from: '08:00', until: '18:00' });
     await openFriday();
     await runChain();
 
@@ -306,7 +332,8 @@ describe('clustering: ties and hard constraints', () => {
     await ask('w3', { from: '14:00', until: '16:00' });
     await ask('r1', { date: SUNDAY });
     await ask('r2', { date: SUNDAY });
-    await ask('r3', { date: SUNDAY, location: 'Downtown Boston', radius: 1 }); // reaches only Boston; the others reach Campus/Cambridge
+    // r3 reaches only Boston; the others reach Campus/Cambridge.
+    await ask('r3', { date: SUNDAY, location: 'Downtown Boston', radius: 1 });
 
     expect(await openFriday()).toEqual([SATURDAY]);
     await runChain(SATURDAY);
@@ -399,7 +426,8 @@ describe('settle', () => {
 
     await matching.settle({ date: SATURDAY, placed: JSON.stringify(seated) });
     for (const u of ['d1', 'd2', 'd3']) expect((await status(u)).status).toBe('MATCHED');
-    for (const u of ['d4', 'p1', 'p2', 'p3']) expect(await status(u)).toMatchObject({ status: 'UNMATCHED', reason: 'NO_VENUE' });
+    for (const u of ['d4', 'p1', 'p2', 'p3'])
+      expect(await status(u)).toMatchObject({ status: 'UNMATCHED', reason: 'NO_VENUE' });
     expect(await planning()).toEqual([]);
     expect(await clusters()).toEqual([]);
 

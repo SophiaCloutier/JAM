@@ -115,9 +115,12 @@ describe('failures fall back to the template', () => {
       return controller.signal;
     });
     // Like a real fetch, reject once the signal aborts, and otherwise never answer.
-    mockFetch((_url, init) => new Promise((_resolve, reject) => {
-      init.signal!.addEventListener('abort', () => reject(init.signal!.reason));
-    }));
+    mockFetch(
+      (_url, init) =>
+        new Promise((_resolve, reject) => {
+          init.signal!.addEventListener('abort', () => reject(init.signal!.reason));
+        }),
+    );
 
     expect(await eventCopy('drawing')).toEqual(await template('drawing'));
     expect(timeout).toHaveBeenCalledWith(8000);

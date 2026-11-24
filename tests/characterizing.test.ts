@@ -1,6 +1,11 @@
 import { afterAll, beforeEach, describe, expect, test } from 'bun:test';
 import { database, closeDatabase } from '../src/database.ts';
-import { CharacterizingConcept, InvalidInterest, ProfileExists, ProfileNotFound } from '../src/concepts/Characterizing.ts';
+import {
+  CharacterizingConcept,
+  InvalidInterest,
+  ProfileExists,
+  ProfileNotFound,
+} from '../src/concepts/Characterizing.ts';
 process.env.MONGODB_DATABASE = `jam_characterizing_test_${crypto.randomUUID().replaceAll('-', '')}`;
 
 /*
