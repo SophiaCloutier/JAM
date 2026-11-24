@@ -9,8 +9,8 @@ JAM matches beginners in Boston into small groups to try a creative hobby togeth
 | F2 | Problem framing | [ProblemFraming.md](ProblemFraming.md) |
 | F3 | Concept design (concepts, user journey, design summary, plan) | [ConceptDesign.md](ConceptDesign.md) |
 | F3 | Visual design study | [Google Slides](https://docs.google.com/presentation/d/1r7CG1E5T2qyKVakuHljLeruqA5qVlXWfylAsXx5wW5o/edit?usp=sharing) |
-| F4 | Deployed app | _Not yet deployed_ |
-| F4 | Narrated recording | _Not yet recorded_ |
+| F4 | Deployed app | https://jam.mit-sdg.dev/ |
+| F4 | Narrated recording | [video](https://youtu.be/jRX1jI__uVw) |
 | F4 | Concept specifications | [design/concepts](design/concepts/) |
 | F4 | Reactions and endpoints | [design/compositions/Application.md](design/compositions/Application.md) |
 | F4 | Generated API documentation | [generated/jam-alpha.md](generated/jam-alpha.md) |
